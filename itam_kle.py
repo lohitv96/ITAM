@@ -1,5 +1,6 @@
 import numpy as np
 from tools import *
+from correlation_matrix import *
 
 
 def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
@@ -38,6 +39,7 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
         elif CDF == 'User':
             # monotonic increasing CDF
             R_NG0 = translate(R_G0, 'User_Distribution', '', mu, sig, parameter1, parameter2)
+
         # Normalize the computed non - Gaussian ACF
         rho = np.zeros_like(R_NG0)
         for i in range(R_NG0.shape[0]):
@@ -47,6 +49,7 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
                 else:
                     rho[i, j] = 0
         R_NG0 = rho
+
         # compute the relative difference between the computed NGACF & the target R(Normalized)
         Err1 = 0
         Err2 = 0
@@ -79,7 +82,7 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
         # Normalize the Gaussian ACF
         R_G1 = R_to_r(R_G1)
         # Iteratively finding the nearest PSD(Qi & Sun, 2006)
-        R_G1 = CorrelationMatrix(R_G1)
+        R_G1 = correlation_matrix(R_G1)
         R_G1 = R_to_r(R_G1)
 
         # Eliminate Numerical error of finding the nearest PSD Scheme
@@ -97,5 +100,5 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
             break
 
     R_G_Converged = R_G0
-    R_NG_Converged = R_NG0_Unnormal
+    # R_NG_Converged = R_NG0_Unnormal
     return R_G_Converged, R_NG_Converged
