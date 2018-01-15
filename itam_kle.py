@@ -1,16 +1,6 @@
 from tools import *
-from correlation_matrix import *
+from correlation_matrix1 import *
 
-########################################################################################################################
-########################################################################################################################
-# Copyright (C) Shields Uncertainty Research Group (SURG)
-# All Rights Reserved
-# Johns Hopkins University
-# Department of Civil Engineering
-# Updated: 14 January 2018
-# Lohit Vandanapu
-########################################################################################################################
-########################################################################################################################
 
 def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
     # Initial condition
@@ -20,17 +10,20 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
     T = t[-1]
     # Erasing zero values of variations
     R_NGT = R
-    TF = [False] * m
-    TF = np.array(TF)
-    for i in range(m):
-        if R[i, i] == 0: TF[i] = True
-    t[TF] = []
-    mu[TF] = []
-    sig[TF] = []
-    if CDF == 'User':
-        parameter1[TF] = []
-        parameter2[TF] = []
+
+    # TF = [False] * m
+    # TF = np.array(TF)
+    # for i in range(m):
+    #     if R[i, i] == 0: TF[i] = True
+    # t[TF] = []
+    # mu[TF] = []
+    # sig[TF] = []
+    # if CDF == 'User':
+    #     parameter1[TF] = []
+    #     parameter2[TF] = []
     # Normalize the non - stationary and stationary non - Gaussian Covariance to Correlation
+
+    R_NGT_Unnormal = R_NGT
     R_NGT = R_to_r(R_NGT)
     # Initial Guess
     R_G0 = R_NGT
@@ -40,6 +33,7 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
     Error0 = 100
     maxii = 5
     Error1_time = np.zeros(maxii)
+
     for ii in range(maxii):
         if CDF == 'Lognormal':
             R_NG0 = translate(R_G0, 'Lognormal_Distribution', '', mu, sig, parameter1, parameter2)
@@ -49,6 +43,7 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
             # monotonic increasing CDF
             R_NG0 = translate(R_G0, 'User_Distribution', '', mu, sig, parameter1, parameter2)
 
+        R_NG0_Unnormal = R_NG0
         # Normalize the computed non - Gaussian ACF
         rho = np.zeros_like(R_NG0)
         for i in range(R_NG0.shape[0]):
@@ -72,11 +67,13 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
             iconverge = 1
         Error1_time[ii] = Error1
         nError1 = nError1 + 1
+
         print('\n')
         print('ITAM-KL: Number of Iterations =', nError1)
         print('ITAM-KL: Value of the realative difference =', Error1)
         print('ITAM-KL: Converged rate of the difference =', convrate)
         print('\n')
+
         # Upgrade the underlying Gaussian ACF
         R_G1 = np.zeros_like(R_G0)
         for i in range(R_G0.shape[0]):
@@ -85,13 +82,16 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
                     R_G1[i, j] = (R_NGT[i, j] / R_NG0[i, j]) * R_G0[i, j]
                 else:
                     R_G1[i, j] = 0
+
         # Eliminate Numerical error of Upgrading Scheme
         R_G1[R_G1 < -1.0] = -0.99999
         R_G1[R_G1 > 1.0] = 0.99999
+        R_G1_Unnormal = R_G1
+
         # Normalize the Gaussian ACF
         R_G1 = R_to_r(R_G1)
         # Iteratively finding the nearest PSD(Qi & Sun, 2006)
-        R_G1 = correlation_matrix(R_G1)
+        R_G1 = np.array(nearPD(R_G1))
         R_G1 = R_to_r(R_G1)
 
         # Eliminate Numerical error of finding the nearest PSD Scheme
@@ -109,5 +109,5 @@ def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
             break
 
     R_G_Converged = R_G0
-    # R_NG_Converged = R_NG0_Unnormal
+    R_NG_Converged = R_NG0_Unnormal
     return R_G_Converged, R_NG_Converged

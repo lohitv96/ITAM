@@ -1,9 +1,11 @@
+from itam_kle import *
+from KLE import *
 import numpy as np
+import matplotlib.pyplot as plt
+
+plt.style.use('seaborn')
 
 m = 40 + 1
-# m = 100 + 1
-# T = 2 # stationary
-# T = 1 # nonstationary
 T = 1000
 dt = T / (m - 1)
 t = np.linspace(0, T, m)
@@ -22,5 +24,18 @@ Y = (X - a) ** 2 / (b - a) / (c - a)
 Y[-1] = 1
 Y[0] = 0
 
+plt.figure()
+plt.title('Cumulative Distribution Function (CDF)')
+plt.xlabel('X')
+plt.ylabel('Probability')
+plt.ylim([0.0, 1.0])
+plt.xlim([-3.0, 3.0])
+plt.plot(X, Y)
+plt.show()
+
 mu = np.ones(m)
 sig = np.sqrt(np.diag(R))
+
+R_G_Converged, R_NG_Canverged = itam_kle(R, t, 'User', mu, sig, X, Y)
+KLE_Object = KLE(10000, R_G_Converged, t,'User',mu,sig,X,Y)
+samples = KLE_Object.samples

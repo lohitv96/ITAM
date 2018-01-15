@@ -79,4 +79,3 @@ for i in range(len(samples)):
 plt.show()
 
 cov_samples = np.cov(samples.T)
-
