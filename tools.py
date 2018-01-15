@@ -275,7 +275,7 @@ def translate_process(Samples_G, Dist, mu, sig, parameter1, parameter2):
             fg1 = stats.norm.cdf(Samples_G[i], 0, sy1)
             g1 = stats.lognorm.ppf(fg1, muN1, sigmaN1)
             g1 = g1 + shift1
-            Samples_NG[i] = mu[i] + g1
+            Samples_NG[i, :] = mu[i] + g1
     elif Dist == 'Beta':
         for i in range(len(Samples_G)):
             sy1 = 1
@@ -287,11 +287,12 @@ def translate_process(Samples_G, Dist, mu, sig, parameter1, parameter2):
             fg1 = stats.norm.cdf(Samples_G[i], 0, sy1)
             g1 = stats.beta.ppf(fg1, alpha, beta)
             g1 = g1 * stretch1 + lo_lim1
-            Samples_NG[i] = mu[i] + g1
+            Samples_NG[i, :] = mu[i] + g1
     elif Dist == 'User':
         for i in range(len(Samples_G)):
             sy1 = 1
             fg1 = stats.norm.cdf(Samples_G[i], 0, sy1)
             g1 = interpolate.interp1d(parameter2, parameter1)
             g1 = g1(fg1)
-            Samples_NG[i] = g1
+            Samples_NG[i, :] = g1
+    return Samples_NG

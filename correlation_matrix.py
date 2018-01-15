@@ -2,6 +2,7 @@ import numpy as np
 from numpy.linalg import eig, norm
 import copy
 
+
 # This code is designed to solve
 # min 0.5*<X-G, X-G>
 # s.t. X_ii =b_i, i=1,2,...,n
@@ -36,12 +37,12 @@ def gradient(y, lam, P, b0, n):
     P0 = copy.deepcopy(P)
     P0 = P0.T
     for i in range(n):
-        P0[i, :] = np.sqrt(max(lam[i], 0))*P0[i,:]
+        P0[i, :] = np.sqrt(max(lam[i], 0)) * P0[i, :]
     for i in range(n):
-        Fy[i] = np.dot(P0[:,i], P0[:,i])
+        Fy[i] = np.dot(P0[:, i], P0[:, i])
     for i in range(n):
-        f = f + (max(lam[i], 0))**2
-    f = 0.5*f - np.dot(b0,y)
+        f = f + (max(lam[i], 0)) ** 2
+    f = 0.5 * f - np.dot(b0, y)
     return f, Fy
 
 
@@ -56,33 +57,35 @@ def omega_mat(lam):
             s = n - r
             dp = lam[:r]
             dn = lam[r:]
-            Omega12 = (np.dot(np.matrix(dp).T,  np.matrix(np.ones(s))))/ (np.dot(np.matrix(abs(dp)).T,  np.matrix(np.ones(s))) + np.dot(np.matrix(np.ones(r)).T, np.matrix(abs(dn))))
+            Omega12 = (np.dot(np.matrix(dp).T, np.matrix(np.ones(s)))) / (
+                    np.dot(np.matrix(abs(dp)).T, np.matrix(np.ones(s))) + np.dot(np.matrix(np.ones(r)).T,
+                                                                                 np.matrix(abs(dn))))
     else:
         Omega12 = []
     return np.array(Omega12)
 
 
 def PCA(X, lam, P, n):
-    Ip = np.where(lam>0)[0]
+    Ip = np.where(lam > 0)[0]
     r = len(Ip)
 
-    if r ==0:
-        X = np.zeros([n,n])
-    elif r ==n:
+    if r == 0:
+        X = np.zeros([n, n])
+    elif r == n:
         X = X
-    elif r<=n/2:
+    elif r <= n / 2:
         lam1 = lam[Ip]
         lam1 = np.sqrt(lam1)
         P1 = P[:, :r]
-        if r>1:
+        if r > 1:
             P1 = np.dot(P1, np.diag(lam1))
             X = np.dot(P1, P1.T)
         else:
-            X = lam1**2*np.dot(P1, P1.T)
+            X = lam1 ** 2 * np.dot(P1, P1.T)
     else:
-        lam2 = -lam[r+1:]
+        lam2 = -lam[r + 1:]
         lam2 = np.sqrt(lam2)
-        P2 = P[:, r+1:]
+        P2 = P[:, r + 1:]
         P2 = np.dot(P2, np.diag(lam2))
         X = X + np.dot(P2, P2.T)
     return X
@@ -94,61 +97,61 @@ def precond_matrix(Omega12, P, n):
     if (r > 0):
         if (r < n / 2):
             H = P.T
-            H = H*H
-            H12 = np.dot(H[:r,:].T, Omega12)
+            H = H * H
+            H12 = np.dot(H[:r, :].T, Omega12)
             d = np.ones(r)
             for i in range(n):
-                c[i] = sum(H[:r, i])*np.dot(d.T,H[:r,i])
-                c[i] = c[i] + 2.0 * np.dot(H12[i,:],H[r:, i])
+                c[i] = sum(H[:r, i]) * np.dot(d.T, H[:r, i])
+                c[i] = c[i] + 2.0 * np.dot(H12[i, :], H[r:, i])
                 c[i] = max(c[i], 1.0e-8)
         elif r < n:
             H = P.T
-            H = H*H
-            Omega12 = np.ones([r, s])-Omega12
-            H12 = np.dot(Omega12, H[r:,:])
+            H = H * H
+            Omega12 = np.ones([r, s]) - Omega12
+            H12 = np.dot(Omega12, H[r:, :])
             d = np.ones(s)
             dd = np.ones(n)
             for i in range(n):
-                c[i] = sum(H[r:, i])*np.dot(d.T,H[r:,i])
-                c[i] = c[i] + 2.0 * np.dot(H[:r, i].T,H12[:,i])
+                c[i] = sum(H[r:, i]) * np.dot(d.T, H[r:, i])
+                c[i] = c[i] + 2.0 * np.dot(H[:r, i].T, H12[:, i])
                 alpha = sum(H[:, i])
-                c[i] = alpha * np.dot(H[:, i].T,dd)-c[i]
+                c[i] = alpha * np.dot(H[:, i].T, dd) - c[i]
                 c[i] = max(c[i], 1.0e-8)
     return c
 
 
-def pre_cg(b,tol,maxit,c,Omega12,P,n):
+def pre_cg(b, tol, maxit, c, Omega12, P, n):
     r = b
     n2b = norm(b)
     tolb = tol * n2b
     p = np.zeros(n)
-    flag=1
-    iterk =0
-    relres=1000
-    z =r/c
-    rz1 = np.dot(r.T,z)
+    flag = 1
+    iterk = 0
+    relres = 1000
+    z = r / c
+    rz1 = np.dot(r.T, z)
     rz2 = 1
     d = z
     for k in range(maxit):
         if k > 0:
-            beta = rz1/rz2
-            d = z + np.dot(beta,d)
-        w = Jacobian_matrix(d,Omega12,P,n)
+            beta = rz1 / rz2
+            d = z + np.dot(beta, d)
+        w = Jacobian_matrix(d, Omega12, P, n)
         denom = np.dot(d, w)
-        iterk =k
-        relres = norm(r)/n2b
+        iterk = k
+        relres = norm(r) / n2b
         if denom <= 0:
-            p = d/norm(d)
+            p = d / norm(d)
             break
         else:
-            alpha = rz1/denom
-            p = p + alpha*d
-            r = r - alpha*w
-        z = r/c
+            alpha = rz1 / denom
+            p = p + alpha * d
+            r = r - alpha * w
+        z = r / c
         if norm(r) <= tolb:
-            iterk =k
-            relres = norm(r)/n2b
-            flag =0
+            iterk = k
+            relres = norm(r) / n2b
+            flag = 0
             break
         rz2 = rz1
         rz1 = np.dot(r, z)
@@ -159,27 +162,27 @@ def Jacobian_matrix(x, Omega12, P, n):
     Ax = np.zeros(n)
     [r, s] = Omega12.shape
     if r > 0:
-        H1 = P[:,:r]
+        H1 = P[:, :r]
         if r < n / 2:
             for i in range(n):
-                H1[i,:] = x[i] * H1[i,:]
-                Omega12 = Omega12 * np.dot(H1.T,P[:,r:])
+                H1[i, :] = x[i] * H1[i, :]
+                Omega12 = Omega12 * np.dot(H1.T, P[:, r:])
                 # H =[np.dot(H1.T,P[:,:r])*(P(:,1:r))'+ Omega12 * (P(:, r+1:n))';Omega12' * (P(:, 1:r))']
             for i in range(n):
-                Ax[i] = np.dot(P[i,:],H[:, i])
+                Ax[i] = np.dot(P[i, :], H[:, i])
                 Ax[i] = Ax[i] + 1.0e-10 * x[i]
         elif r == n:
-                Ax = (1 + 1.0e-10) * x
+            Ax = (1 + 1.0e-10) * x
         else:
             H2 = P[:, r:]
             for i in range(n):
-                H2[i,:] = x[i] * H2[i,:]
+                H2[i, :] = x[i] * H2[i, :]
             Omega12 = np.ones([r, s]) - Omega12
-            Omega12 = Omega12* np.dot(P[:,:r].T,H2)
+            Omega12 = Omega12 * np.dot(P[:, :r].T, H2)
             # H = [Omega12 * (P(:, r+1:n))';Omega12' *P[:,:r].T +( (P(:,r+1:n))' * H2)*(P(:, r+1:n))']
 
         for i in range(n):
-            Ax[i] = -P[i,:]*H[:, i]
+            Ax[i] = -P[i, :] * H[:, i]
             Ax[i] = x[i] + Ax[i] + 1.0e-10 * x[i]
     return
 
@@ -234,7 +237,7 @@ def correlation_matrix(G, b=None, tau=None, tol=None):
     Initial_f = val_G - f0
 
     X = PCA(X, lam, P, n)
-    val_obj = np.sum(((X - G)*(X - G)).flatten())
+    val_obj = np.sum(((X - G) * (X - G)).flatten())
     gap = (val_obj - Initial_f) / (1 + abs(Initial_f) + abs(val_obj))
 
     f = f0
@@ -252,21 +255,21 @@ def correlation_matrix(G, b=None, tau=None, tol=None):
         c = precond_matrix(Omega12, P, n)
         [d, flag, relres, iterk] = pre_cg(b, tol, maxit, c, Omega12, P, n)
         print('Newton-CG: Number of CG Iterations == ', iterk)
-        if (flag!=0):
+        if (flag != 0):
             print('..... Not a complet Newton-CG step......')
-        slope = Fy - np.dot(b0,d)
+        slope = Fy - np.dot(b0, d)
         y = x0 + d
         x0 + d
         X = G + np.diag(y)
-        X = (X + X.T)/2
+        X = (X + X.T) / 2
         [P, lam] = Mymexeig(X)
         [f, Fy] = gradient(y, lam, P, b0, n)
         k_inner = 0
         while k_inner <= Iter_inner and f > f0 + sigma_1 * 0.5 ^ k_inner * slope + 1.0e-6:
             k_inner = k_inner + 1
-            y = x0 + (0.5**k_inner) * d
+            y = x0 + (0.5 ** k_inner) * d
             X = G + np.diag(y)
-            X = (X + X.T)/2
+            X = (X + X.T) / 2
             [P, lam] = Mymexeig(X)
             [f, Fy] = gradient(y, lam, P, b0, n)
         f_eval = f_eval + k_inner + 1
@@ -275,7 +278,7 @@ def correlation_matrix(G, b=None, tau=None, tol=None):
         val_dual = val_G - f0
         X = PCA(X, lam, P, n)
         Dual_f = val_G - f0
-        val_obj = sum(((X - G)*(X - G)).flatten()) / 2
+        val_obj = sum(((X - G) * (X - G)).flatten()) / 2
         gap = (val_obj - val_dual) / (1 + abs(val_dual) + abs(val_obj))
         print('Newton-CG:  The relative duality gap ==================== ', gap)
         print('Newton-CG:  The Dual objective function value =========== ', Dual_f)

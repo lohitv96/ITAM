@@ -14,7 +14,7 @@ class KLE():
 
     def _simulate(self, n_sim):
         # Gaussian Samples
-        [lam, phi] = np.linalg.eig(self.R)
+        lam, phi = np.linalg.eig(self.R)
         dlambda = np.diag(lam)
         nRV = self.R.shape[0]
         xi = np.random.normal(size=(nRV, n_sim))

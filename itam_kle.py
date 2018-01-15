@@ -1,7 +1,16 @@
-import numpy as np
 from tools import *
 from correlation_matrix import *
 
+########################################################################################################################
+########################################################################################################################
+# Copyright (C) Shields Uncertainty Research Group (SURG)
+# All Rights Reserved
+# Johns Hopkins University
+# Department of Civil Engineering
+# Updated: 14 January 2018
+# Lohit Vandanapu
+########################################################################################################################
+########################################################################################################################
 
 def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
     # Initial condition
