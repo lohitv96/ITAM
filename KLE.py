@@ -22,5 +22,6 @@ class KLE():
         lam = lam.astype(np.float64)
         Samples_G = np.dot(phi, np.dot(sqrtm(lam), xi))
         Samples_G = np.real(Samples_G)
+        Samples_G = Samples_G.T
         Samples_NG = translate_process(Samples_G, self.Dist, self.mu, self.sig, self.parameter1, self.parameter2)
         return Samples_NG

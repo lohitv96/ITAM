@@ -2,6 +2,7 @@ from itam_kle import *
 from KLE import *
 import numpy as np
 import matplotlib.pyplot as plt
+from statsmodels.distributions.empirical_distribution import ECDF
 
 plt.style.use('seaborn')
 
@@ -37,5 +38,13 @@ mu = np.ones(m)
 sig = np.sqrt(np.diag(R))
 
 R_G_Converged, R_NG_Canverged = itam_kle(R, t, 'User', mu, sig, X, Y)
-KLE_Object = KLE(10000, R_G_Converged, t,'User',mu,sig,X,Y)
+KLE_Object = KLE(10000, R_G_Converged, t, 'User', mu, sig, X, Y)
 samples = KLE_Object.samples
+
+plt.figure()
+for i in range(len(samples)):
+    ecdf = ECDF(samples[i, :])
+    plt.plot(np.sort(samples[i, :]), ecdf(np.sort(samples[i, :])), ':')
+plt.show()
+
+cov_samples = np.cov(samples.T)

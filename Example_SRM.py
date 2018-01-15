@@ -3,7 +3,6 @@ from SRM import *
 import numpy as np
 import matplotlib.pyplot as plt
 from statsmodels.distributions.empirical_distribution import ECDF
-import pylab as p
 
 plt.style.use('seaborn')
 
