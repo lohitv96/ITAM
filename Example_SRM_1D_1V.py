@@ -11,7 +11,7 @@ dt = T / (m - 1)
 t = np.linspace(0, T, m)
 
 # Frequency
-n = 500 + 1
+n = 400 + 1
 W = 0.2
 dw = W / (n - 1)
 w = np.linspace(0, W, n)
