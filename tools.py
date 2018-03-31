@@ -4,6 +4,17 @@ from scipy import interpolate
 from scipy.integrate import simps
 
 
+def estimate_PSD(samples, nt, T):
+    sample_size = nt
+    sample_maxtime = T
+    dt = T / (nt - 1)
+    Xw = np.fft.fft(samples, sample_size, axis=1)
+    Xw = Xw[:, 0: int(sample_size / 2)]
+    m_Ps = np.mean(np.absolute(Xw) ** 2 * sample_maxtime / sample_size ** 2 / 2 / np.pi, axis=0)
+    num = int(T / (2 * dt))
+    return np.linspace(0, (1 / (2 * dt) - 1 / T), num) * 2 * np.pi, m_Ps
+
+
 def S_to_R(S, w, t):
     dw = w[1] - w[0]
     fac = np.ones(len(w))
@@ -71,7 +82,7 @@ def LogN_Var(y1, y2, rx_g, muN1, sigmaN1, muN2, sigmaN2, sy1, sy2, shift1, shift
 
     fy = 1 / (2 * np.pi * sy1 * sy2 * (np.sqrt(1 - (rx_g / (sy1 * sy2)) ** 2))) * np.exp(
         -1 / (2 * (1 - (rx_g / (sy1 * sy2)) ** 2)) * (
-            y1sq / (sy1 ** 2) + y2sq / (sy2 ** 2) - 2. * (y1y2 * rx_g / (sy1 * sy2)) / (sy1 * sy2)))
+                y1sq / (sy1 ** 2) + y2sq / (sy2 ** 2) - 2. * (y1y2 * rx_g / (sy1 * sy2)) / (sy1 * sy2)))
     z = fy * (g1 * g2)
     return z
 
@@ -91,7 +102,7 @@ def Beta_Var(y1, y2, rx_g, lo_lim1, stretch1, lo_lim2, stretch2, alpha, beta, sy
 
     fy = 1 / (2 * np.pi * sy1 * sy2 * (np.sqrt(1 - (rx_g / (sy1 * sy2)) ** 2))) * np.exp(
         -1 / (2 * (1 - (rx_g / (sy1 * sy2)) ** 2)) * (
-            y1sq / (sy1 ** 2) + y2sq / (sy2 ** 2) - 2. * (y1y2 * rx_g / (sy1 * sy2)) / (sy1 * sy2)))
+                y1sq / (sy1 ** 2) + y2sq / (sy2 ** 2) - 2. * (y1y2 * rx_g / (sy1 * sy2)) / (sy1 * sy2)))
     z = fy * (g1 * g2)
     return z
 
@@ -111,7 +122,7 @@ def User_Var(y1, y2, rx_g, cdf_x, cdf_y, sy1, sy2):
 
     fy = 1 / (2 * np.pi * sy1 * sy2 * (np.sqrt(1 - (rx_g / (sy1 * sy2)) ** 2))) * np.exp(
         -1 / (2 * (1 - (rx_g / (sy1 * sy2)) ** 2)) * (
-            y1sq / (sy1 ** 2) + y2sq / (sy2 ** 2) - 2. * (y1y2 * rx_g / (sy1 * sy2)) / (sy1 * sy2)))
+                y1sq / (sy1 ** 2) + y2sq / (sy2 ** 2) - 2. * (y1y2 * rx_g / (sy1 * sy2)) / (sy1 * sy2)))
     z = fy * (g1 * g2)
     return z
 
