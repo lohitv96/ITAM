@@ -6,6 +6,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import time
 import math
 
+time1 = time.time()
+
 plt.style.use('seaborn')
 
 # Make note of initial time
@@ -17,8 +19,6 @@ nt = 256  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
 nf = 128 # Num of Discretized Freq.
 nsamples = 100000  # Num.of samples
-# W = 2*np.pi*F
-# nw = nf
 
 # # Generation of Input Data(Stationary)
 dt = T / nt
@@ -43,27 +43,15 @@ P = 20 * 1 / np.sqrt(2 * np.pi) * np.exp(-1 / 2 * f ** 2)
 # Plotting the power spectrum
 plt.figure(1)
 plt.plot(f, P, label='Target')
-plt.title('Power spectrum')
+plt.title('$P(\omega)$')
 plt.xlabel('$\omega$')
-plt.ylabel('$S(\omega)$')
+plt.show()
 
 t_u = 2 * np.pi / (2 * 2 * np.pi * F)
 if dt * 0.99 > t_u:
     print('\n')
     print('ERROR:: Condition of delta_t <= 2*np.pi/(2*2*np.pi*F_u) = 1/(2*W_u)')
     print('\n')
-
-# Simulation step
-P1 = deepcopy(P)
-P1[0] = P1[0]/2
-object = SRM(nsamples, P1, df, nt, nf)
-samples = object.samples
-
-# Estimate PSDF
-plt.figure(1)
-plt.plot(f, estimate_PSD(samples, nt, T)[1], label='Estimated')
-plt.legend()
-plt.show()
 
 # Generating the 2 dimensional mesh grid
 fx = f
@@ -168,7 +156,7 @@ for i in range(nf):
 # Plotting the Bicohorence function
 fig = plt.figure(5)
 ax = fig.gca(projection='3d')
-h = ax.plot_surface(Fx, Fy, (Bc2 + np.transpose(Bc2) - np.diag(np.diag(Bc2))))
+ax.plot_surface(Fx, Fy, (Bc2 + np.transpose(Bc2) - np.diag(np.diag(Bc2))))
 plt.title('Bicoherence')
 ax.set_xlabel('$\omega_1$')
 ax.set_xlabel('$\omega_2$')
@@ -191,24 +179,21 @@ plt.xlabel('$F$')
 plt.ylabel('$S(F)$')
 plt.show()
 
-# Simulation step - check again
-# samples = np.zeros(shape=[nsamples, nt])
-
 PP1 = deepcopy(PP)
 PP1[0] = PP1[0]/2
 
-F_old = SRM(nsamples, P1, df, nt, nf).samples
-F1 = SRM(nsamples, PP1, df, nt, nf).samples
+Phi = np.random.uniform(size=[nsamples, nf]) * 2 * np.pi
+np.savetxt('Phi.txt', Phi)
 
-# Estimate Pure PSDF
-plt.figure(8)
-plt.plot(f, estimate_PSD(F_old, nt, T)[1], label='Actual')
-plt.plot(f, estimate_PSD(F1, nt, T)[1], label='Pure')
-plt.legend()
-plt.show()
+B_old = 2 * np.exp(Phi * 1.0j) * np.sqrt(P1 * df)
+F_old = np.fft.fftn(B_old, [nt])
+F_old = np.real(F_old)
+
+B = 2 * np.exp(Phi * 1.0j) * np.sqrt(PP1 * df)
+F1 = np.fft.fftn(B, [nt])
+F1 = np.real(F1)
 
 F2 = np.zeros(shape=[nsamples, nt])
-Phi = 2 * np.pi * np.random.uniform(size=[nsamples, nf])
 Coeff = 2 * np.sqrt(df * P)
 
 for k in range(nf):
@@ -219,24 +204,23 @@ for k in range(nf):
             if Bc2[f2, f1] > 0:
                 for j in range(nt):
                     F2[:, j] = F2[:, j] + Coeff[k] * np.sqrt(Bc2[f2, f1]) * np.cos(2 * np.pi * (f[f2] + f[f1]) * t[j] - Phi[:, f2] - Phi[:, f1] - Biphase[f2, f1])
-
-F_new = F1[:nsamples] + samples2
+F_new = F1 + F2
 
 # Estimating from the BSRM simulation
 plt.figure(9)
-plt.plot(f, P, label='True')
+plt.plot(f, P, label='Target')
 plt.plot(f, estimate_PSD(F_new, nt, T)[1], label='BSRM Simulation')
 plt.legend()
 plt.show()
 
 Xw = np.fft.fft(F_new, axis=1)
-Xw = Xw[:, :int(nt/2)]
+Xw = Xw[:, :nf]
 
 # Bispectrum
-s_B = np.zeros([10000, int(nt/2), int(nt/2)])
+s_B = np.zeros([nsamples, nf, nf])
 s_B = s_B + 1.0j*s_B
-for i1 in range(int(nt / 2)):
-    for i2 in range(int(nt / 2) - i1):
+for i1 in range(nf):
+    for i2 in range(nf - i1):
         s_B[:, i1, i2] = s_B[:, i1, i2] + (Xw[:, i1] * Xw[:, i2] * np.conj(Xw[:, i1 + i2]) / nt ** 2 / (nt / T)) * T
 m_B = np.mean(s_B, axis=0)
 # # # Set zero on X & Y axis
@@ -250,39 +234,29 @@ m_B_Real = np.real(m_B)
 m_B_Imag = np.imag(m_B)
 
 # Plotting the Estimated Real Bispectrum function
-fig = plt.figure(7)
+fig = plt.figure(10)
 ax = fig.gca(projection='3d')
 h = ax.plot_surface(Fx, Fy, m_B_Real)
-plt.title('Estimated Real Bispectrum function')
+plt.title('Estimated $\Re{B(\omega_1, \omega_2)}$')
 ax.set_xlabel('$\omega_1$')
-ax.set_xlabel('$\omega_2$')
-ax.set_xlabel('$B(\omega_1, \omega_2)$')
+ax.set_ylabel('$\omega_2$')
 plt.show()
 
-# plt.figure(7)
-# h = mesh(0:(1 / T): (1 / (2 * dt) - 1 / T), 0: (1 / T):(1 / (2 * dt) - 1 / T), m_B_Real)
-# plt.title('Estimated Real Bispectrum')
-# plt.xlim([0 50])
-# plt.ylim([0 50])
-# plt.zlim([-0.1 0.1])
-# plt.xlabel('$f_1$(Hz)', 'Interpreter', 'latex')
-# plt.ylabel('$f_2$(Hz)', 'Interpreter', 'latex')
-# plt.zlabel('Estimated $\Re{B}(f_1, f_2)$', 'Interpreter', 'latex')
-# plt.show()
+# Plotting the Estimated Imaginary Bispectrum function
+fig = plt.figure(11)
+ax = fig.gca(projection='3d')
+h = ax.plot_surface(Fx, Fy, m_B_Imag)
+plt.title('Estimated $\Im{B(\omega_1, \omega_2)}$')
+ax.set_xlabel('$\omega_1$')
+ax.set_ylabel('$\omega_2$')
+plt.show()
 
-# plt.figure(8)
-# h = mesh(0:(1 / T): (1 / (2 * dt) - 1 / T), 0: (1 / T):(1 / (2 * dt) - 1 / T), m_B_Imag)
-# plt.title('Estimated Imaginary Bispectrum')
-# plt.xlim([0 50])
-# plt.ylim([0 50])
-# plt.zlim([-0.1 0.1])
-# plt.xlabel('$f_1$(Hz)', 'Interpreter', 'latex')
-# plt.ylabel('$f_2$(Hz)', 'Interpreter', 'latex')
-# plt.zlabel('Estimated $\Im{B}(f_1, f_2)$', 'Interpreter', 'latex')
+print('The total time taken is ', time.time() - time1)
 
+"""
+# Comparing the other statistics too
 # D_P11 = (diff(P11')/dt)'
 # D_P33 = (diff(P33')/dt)'
-"""
 # variance
 Target_var = 2 * np.dot(P, df)
 Target_var_D = 2 * sum((2 * np.pi) ^ 2 * f. ^ 2. * P * df)
