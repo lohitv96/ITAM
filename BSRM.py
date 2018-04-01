@@ -95,20 +95,18 @@ B_Imag[:, 0] = 0
 fig = plt.figure(2)
 ax = fig.gca(projection='3d')
 ax.plot_surface(Fx, Fy, B_Real)
-plt.title('Target Real Bispectrum')
+plt.title('Target $\Re{B(\omega_1, \omega_2)}$')
 ax.set_xlabel('$\omega_1$(Hz)')
 ax.set_ylabel('$\omega_2$(Hz)')
-ax.set_zlabel('Target $\Re{B(\omega_1, \omega_2)}$')
 plt.show()
 
 # Plotting the Imaginary part of the power spectrum
 fig = plt.figure(3)
 ax = fig.gca(projection='3d')
 ax.plot_surface(Fx, Fy, B_Imag)
-plt.title('Target Imaginary Bispectrum')
+plt.title('Target $\Im{B(\omega_1, \omega_2)}$')
 ax.set_xlabel('$\omega_1$(Hz)')
 ax.set_ylabel('$\omega_2$(Hz)')
-ax.set_zlabel('Target $\Im{B(\omega_1, \omega_2)}$')
 plt.show()
 
 B_Complex = B_Real + 1j * B_Imag
@@ -122,10 +120,9 @@ Biphase[np.isnan(Biphase)] = 0
 fig = plt.figure(4)
 ax = fig.gca(projection='3d')
 ax.plot_surface(Fx, Fy, Biphase * (180 / np.pi))
-plt.title('Target Biphase')
+plt.title('Target $Biphase(\omega_1, \omega_2)$')
 ax.set_xlabel('$\omega_1$(Hz)')
 ax.set_ylabel('$\omega_2$(Hz)')
-ax.set_zlabel('Target $\Re{B(\omega_1, \omega_2)}$')
 plt.show()
 
 # Bicoherence(Bc2), Pure Power spectrum(PP)
@@ -157,26 +154,26 @@ for i in range(nf):
 fig = plt.figure(5)
 ax = fig.gca(projection='3d')
 ax.plot_surface(Fx, Fy, (Bc2 + np.transpose(Bc2) - np.diag(np.diag(Bc2))))
-plt.title('Bicoherence')
+plt.title('$b^2(\omega_1, \omega_2)$')
 ax.set_xlabel('$\omega_1$')
-ax.set_xlabel('$\omega_2$')
-ax.set_xlabel('$b^2(\omega_1, \omega_2)$')
+ax.set_ylabel('$\omega_2$')
 plt.show()
 
 # Plotting the pure power spectrum function
 plt.figure(6)
 plt.plot(f, sum_Bc2)
 plt.title('Sum of squared bicoherence function')
-plt.xlabel('$F$')
+plt.xlabel('$\omega$')
 plt.show()
 
 # Plotting the pure power spectrum function
 plt.figure(7)
-plt.plot(f, P)
-plt.plot(f, PP)
-plt.title('Pure Power spectrum')
-plt.xlabel('$F$')
-plt.ylabel('$S(F)$')
+plt.plot(f, P, label='Total')
+plt.plot(f, PP, label='Pure')
+plt.title('Comparing the Pure part of the Power spectrum')
+plt.xlabel('$\omega$')
+plt.ylabel('$P(F)$')
+plt.legend()
 plt.show()
 
 PP1 = deepcopy(PP)
@@ -184,6 +181,9 @@ PP1[0] = PP1[0]/2
 
 Phi = np.random.uniform(size=[nsamples, nf]) * 2 * np.pi
 np.savetxt('Phi.txt', Phi)
+
+P1 = deepcopy(P)
+P1[0] = P1[0]/2
 
 B_old = 2 * np.exp(Phi * 1.0j) * np.sqrt(P1 * df)
 F_old = np.fft.fftn(B_old, [nt])
