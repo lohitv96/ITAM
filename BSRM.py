@@ -42,11 +42,10 @@ P = 20 * 1 / np.sqrt(2 * np.pi) * np.exp(-1 / 2 * f ** 2)
 
 # Plotting the power spectrum
 plt.figure(1)
-plt.plot(f, P, label='True')
+plt.plot(f, P, label='Target')
 plt.title('Power spectrum')
 plt.xlabel('$\omega$')
 plt.ylabel('$S(\omega)$')
-plt.show()
 
 t_u = 2 * np.pi / (2 * 2 * np.pi * F)
 if dt * 0.99 > t_u:
@@ -57,13 +56,12 @@ if dt * 0.99 > t_u:
 # Simulation step
 P1 = deepcopy(P)
 P1[0] = P1[0]/2
-P1 = P1*2*np.pi
 object = SRM(nsamples, P1, df, nt, nf)
 samples = object.samples
 
 # Estimate PSDF
 plt.figure(1)
-plt.plot(f, estimate_PSD(samples, nt, T)[1], label='estimated')
+plt.plot(f, estimate_PSD(samples, nt, T)[1], label='Estimated')
 plt.legend()
 plt.show()
 
@@ -135,7 +133,7 @@ Biphase[np.isnan(Biphase)] = 0
 # Plotting the Biphase angles
 fig = plt.figure(4)
 ax = fig.gca(projection='3d')
-h = ax.plot_surface(Fx, Fy, Biphase * (180 / np.pi))
+ax.plot_surface(Fx, Fy, Biphase * (180 / np.pi))
 plt.title('Target Biphase')
 ax.set_xlabel('$\omega_1$(Hz)')
 ax.set_ylabel('$\omega_2$(Hz)')
@@ -198,7 +196,6 @@ plt.show()
 
 PP1 = deepcopy(PP)
 PP1[0] = PP1[0]/2
-PP1 = PP1*2*np.pi
 
 F_old = SRM(nsamples, P1, df, nt, nf).samples
 F1 = SRM(nsamples, PP1, df, nt, nf).samples
@@ -210,61 +207,57 @@ plt.plot(f, estimate_PSD(F1, nt, T)[1], label='Pure')
 plt.legend()
 plt.show()
 
-samples2 = np.zeros(shape=[10000, nt])
+F2 = np.zeros(shape=[nsamples, nt])
+Phi = 2 * np.pi * np.random.uniform(size=[nsamples, nf])
+Coeff = 2 * np.sqrt(df * P)
 
-for m in range(10000):
-    if m % 1000 == 0:
-        print(m)
-    Phi = 2 * np.pi * np.random.uniform(size=nf)
-    for k in range(nf):
-        if sum_Bc2[k] > 0:
-            Coeff3 = 2 * np.sqrt(df * P[k])
-            for l in range(int(np.ceil((k+1)/2))):
-                f1 = k - l
-                f2 = l
-                if Bc2[f2, f1] > 0:
-                    for j in range(nt):
-                        samples2[m, j] = samples2[m, j] + Coeff3 * math.sqrt(Bc2[f2, f1]) * math.cos(2 * math.pi * (f[f2] + f[f1]) * t[j] - Phi[f2] - Phi[f1] - Biphase[f2, f1])
+for k in range(nf):
+    if sum_Bc2[k] > 0:
+        for l in range(int(np.ceil((k+1)/2))):
+            f1 = k - l
+            f2 = l
+            if Bc2[f2, f1] > 0:
+                for j in range(nt):
+                    F2[:, j] = F2[:, j] + Coeff[k] * np.sqrt(Bc2[f2, f1]) * np.cos(2 * np.pi * (f[f2] + f[f1]) * t[j] - Phi[:, f2] - Phi[:, f1] - Biphase[f2, f1])
 
-F_new = F1 + samples2
+F_new = F1[:nsamples] + samples2
 
 # Estimating from the BSRM simulation
 plt.figure(9)
-plt.plot(f, estimate_PSD(F_new, nt, T)[1], label='estimated')
+plt.plot(f, P, label='True')
+plt.plot(f, estimate_PSD(F_new, nt, T)[1], label='BSRM Simulation')
 plt.legend()
 plt.show()
 
-# Xw = np.fft.fft(F_new, axis=1)
-# Xw = Xw[:, :int(nt/2)]
-#
-# # Bispectrum
-# s_B = np.zeros([int(nt/2), int(nt/2)])
-# s_B = s_B + 1.0j*s_B
-# for k in range(1000):
-#     for i1 in range(int(nt / 2)):
-#         for i2 in range(int(nt / 2) - i1):
-#             s_B[i1, i2] = s_B[i1, i2] + (Xw[k, i1] * Xw[k, i2] * np.conj(Xw[k, i1 + i2]) / nt ** 2 / (nt / T)) * T
-# m_B = s_B / nsamples
-#
-# # # # Set zero on X & Y axis
-# m_B[0, :] = 0
-# m_B[:, 0] = 0
-#
-# # amplitude
-# m_B_Ampl = np.absolute(m_B)
-# # real & imag
-# m_B_Real = np.real(m_B)
-# m_B_Imag = np.imag(m_B)
+Xw = np.fft.fft(F_new, axis=1)
+Xw = Xw[:, :int(nt/2)]
 
-# # Plotting the Estimated Real Bispectrum function
-# fig = plt.figure(7)
-# ax = fig.gca(projection='3d')
-# h = ax.plot_surface(w[1:], w[1:], m_B_Real)
-# plt.title('Estimated Real Bispectrum function')
-# ax.set_xlabel('$\omega_1$')
-# ax.set_xlabel('$\omega_2$')
-# ax.set_xlabel('$B(\omega_1, \omega_2)$')
-# plt.show()
+# Bispectrum
+s_B = np.zeros([10000, int(nt/2), int(nt/2)])
+s_B = s_B + 1.0j*s_B
+for i1 in range(int(nt / 2)):
+    for i2 in range(int(nt / 2) - i1):
+        s_B[:, i1, i2] = s_B[:, i1, i2] + (Xw[:, i1] * Xw[:, i2] * np.conj(Xw[:, i1 + i2]) / nt ** 2 / (nt / T)) * T
+m_B = np.mean(s_B, axis=0)
+# # # Set zero on X & Y axis
+m_B[0, :] = 0
+m_B[:, 0] = 0
+
+# amplitude
+m_B_Ampl = np.absolute(m_B)
+# real & imag
+m_B_Real = np.real(m_B)
+m_B_Imag = np.imag(m_B)
+
+# Plotting the Estimated Real Bispectrum function
+fig = plt.figure(7)
+ax = fig.gca(projection='3d')
+h = ax.plot_surface(Fx, Fy, m_B_Real)
+plt.title('Estimated Real Bispectrum function')
+ax.set_xlabel('$\omega_1$')
+ax.set_xlabel('$\omega_2$')
+ax.set_xlabel('$B(\omega_1, \omega_2)$')
+plt.show()
 
 # plt.figure(7)
 # h = mesh(0:(1 / T): (1 / (2 * dt) - 1 / T), 0: (1 / T):(1 / (2 * dt) - 1 / T), m_B_Real)

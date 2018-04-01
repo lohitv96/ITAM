@@ -10,9 +10,9 @@ def estimate_PSD(samples, nt, T):
     dt = T / (nt - 1)
     Xw = np.fft.fft(samples, sample_size, axis=1)
     Xw = Xw[:, 0: int(sample_size / 2)]
-    m_Ps = np.mean(np.absolute(Xw) ** 2 * sample_maxtime / sample_size ** 2 / 2 / np.pi, axis=0)
+    m_Ps = np.mean(np.absolute(Xw) ** 2 * sample_maxtime / sample_size ** 2 , axis=0)
     num = int(T / (2 * dt))
-    return np.linspace(0, (1 / (2 * dt) - 1 / T), num) * 2 * np.pi, m_Ps
+    return np.linspace(0, (1 / (2 * dt) - 1 / T), num), m_Ps
 
 
 def S_to_R(S, w, t):
