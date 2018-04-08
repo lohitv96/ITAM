@@ -4,22 +4,20 @@ from statsmodels.distributions.empirical_distribution import ECDF
 
 plt.style.use('seaborn')
 
-# Input Data
-# Time
-nt = 400 + 1
-T = 250
-dt = T / (nt - 1)
-t = np.linspace(0, T, nt)
+# Input parameters
+T = 100  # Time(1 / T = dw)
+nt = 256  # Num.of Discretized Time
+F = 1 / T * nt / 2  # Frequency.(Hz)
+nw = 128 # Num of Discretized Freq.
+n_sim = 100000  # Num.of samples
 
-# Frequency
-nw = 100 + 1
-W = 3
-dw = W / (nw - 1)
-w = np.linspace(0, W, nw)
+# # Generation of Input Data(Stationary)
+dt = T / nt
+t = np.linspace(0, T - dt, nt)
+dw = F / nw
+w = np.linspace(0, F - dw, nw)
 
-n_sim = 100000
-
-t_u = 2*np.pi/2/W
+t_u = 2*np.pi/2/F
 
 if dt>t_u:
     print('Error')
@@ -32,34 +30,3 @@ plt.show()
 
 SRM_object = SRM(n_sim, S, dw, nt, nw, case='uni')
 samples = SRM_object.samples
-
-# Plotting the emperical distribution of the samples
-# plt.figure()
-# for i in range(len(samples)):
-#     ecdf = ECDF(samples[i, :])
-#     plt.plot(np.sort(samples[i, :]), ecdf(np.sort(samples[i, :])), ':')
-# plt.show()
-
-var_samples = np.var(samples[0])
-
-# plotting individual samples
-# plt.figure()
-# plt.plot(t, samples[0])
-# plt.show()
-
-# Estimating the power spectrum density function
-a = []
-for i in range(n_sim):
-    xw = np.fft.ifft(samples[i], 401)
-    xw = xw[:201]
-    a1 = np.abs(xw)**2*T/2/np.pi
-    a.append(a1)
-
-a = np.array(a)
-a_m = np.mean(a, axis=0)
-num = int((1/(2*dt) + 1/T)/(1/T))
-w1 = np.linspace(0, 1/(2*dt) + 1/T, num)
-plt.figure()
-plt.plot(w1, a_m)
-plt.plot(w, S)
-plt.show()

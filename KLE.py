@@ -16,5 +16,4 @@ class KLE:
         samples = np.dot(phi, np.dot(sqrtm(lam), xi))
         samples = np.real(samples)
         samples = samples.T
-        # Samples_NG = translate_process(Samples_G, self.Dist, self.mu, self.sig, self.parameter1, self.parameter2)
         return samples

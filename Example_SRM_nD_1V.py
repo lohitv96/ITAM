@@ -1,36 +1,35 @@
 from SRM import *
-from collections import deque
-from timeit import timeit
-import matplotlib.pyplot as plt
-import json
-
-plt.style.use('seaborn')
 
 # Input Data
 # Time
-dim = 2
+dim = 4
+
 T = 10
-dt = 0.1
-m = int(T / dt) + 1
-t = np.linspace(0, T, m)
+nt = 200
+dt = T/nt
+t = np.linspace(0, T-dt, nt)
 
 # Frequency
-n = 100 + 1
-W = np.array([1.5, 2.5])
-dw = W / (n - 1)
-x_list = [np.linspace(0, W[i], n) for i in range(dim)]
+W = np.array([1.0, 1.5, 2.0, 2.5])
+nw = 100
+dw = W / nw
+x_list = [np.linspace(0, W[i] - dw[i], nw) for i in range(dim)]
 xy_list = np.array(np.meshgrid(*x_list, indexing='ij'))
 S = 125 / 4 * np.linalg.norm(xy_list, axis=0) ** 2 * np.exp(-5 * np.linalg.norm(xy_list, axis=0))
 
-json.dump(xy_list.tolist(), open('W_data.txt', 'w'))
-json.dump(S.tolist(), open('S_data.txt', 'w'))
-del xy_list
-del S
+n_sim = 100
 
-f = open('W_data.txt')
-xy_list = deque(f)
-# xy_input = json.load(open('W_data.txt'))
-# S = json.loads(open('S_data.txt'))
+SRM_object = SRM(n_sim, S, dw, nt, nw, case='uni')
+samples = SRM_object.samples
 
-# SRM_object = SRM(1, S, dw, m, n, case='uni')
-# samples = SRM_object.samples
+# Tx, Ty = np.meshgrid(t, t)
+#
+# # Plotting a sample realisation
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.plot_surface(Tx, Ty, samples[0])
+# plt.title('Realisation')
+# ax.set_xlabel('$t_1$')
+# ax.set_ylabel('$t_2$')
+# plt.show()
+

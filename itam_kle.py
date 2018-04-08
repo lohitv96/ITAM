@@ -1,6 +1,4 @@
 from tools import *
-from correlation_matrix1 import *
-
 
 def itam_kle(R, t, CDF, mu, sig, parameter1, parameter2):
     # Initial condition
