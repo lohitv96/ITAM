@@ -25,8 +25,7 @@ if dt>t_u:
 # Defining the Power Spectrum Density Function
 S = 125 / 4 * w ** 2 * np.exp(-5 * w)
 
-plt.plot(w, S)
-plt.show()
+np.savetxt('S_data.txt', S)
 
 SRM_object = SRM(n_sim, S, dw, nt, nw, case='uni')
 samples = SRM_object.samples
