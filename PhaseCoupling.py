@@ -11,30 +11,9 @@ plt.style.use('seaborn')
 # # Generate a series of theta
 nsamples = 20000
 
-# F = 50
-# nf = 100
-# df = F / nf
-#
-# T = 1 / df
-# nt = 200
-# dt = T / nt
-#
-# f = np.linspace(0, F - df, nf)
-# t = np.linspace(0, T - dt, nt)
-#
-# P = (f == 10) * 0.25 / df + (f == 20) * 0.25 / df + (f == 30) * 0.25 / df + (f == 40) * 0.25 / df
-# fx = f
-# fy = f
-# Fx, Fy = np.meshgrid(f, f)
-# B = 1 / np.sqrt(2) * ((Fx == 20) * (Fy == 20) * 0.25 / df ** 2 * 0.999999 + (Fx == 10) * (
-#         Fy == 30) * 0.125 / df ** 2 * 0.999999 + (Fx == 30) * (
-#                               Fy == 10) * 0.125 / df ** 2 * 0.999999)
-#
-# B_Real = B
-# B_Imag = B
-# B_Complex = B_Real + 1j * B_Imag
-
+########################################################################################################################
 # Input parameters
+
 T = 100  # Time(1 / T = dw)
 nt = 256  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
@@ -108,33 +87,7 @@ P1[0] = P1[0]/2
 obj = BSRM(nsamples, P1, B_Complex, dt, df, nt, nf)
 samples_BSRM = obj.samples
 print('Time to run BSRM is', time.time() - time1)
-
 Phi = obj.phi
-
-P_BSRM = estimate_PSD(samples_BSRM, nt, T)[1]
-
-plt.figure()
-plt.plot(P_BSRM)
-plt.plot(P)
-plt.show()
-
-Xw = np.fft.fft(samples_BSRM, axis=1)
-Xw = Xw[:, :nf]
-
-# Bispectrum
-s_B = np.zeros([nsamples, nf, nf])
-s_B = s_B + 1.0j * s_B
-for i1 in range(nf):
-    for i2 in range(nf - i1):
-        s_B[:, i1, i2] = s_B[:, i1, i2] + (Xw[:, i1] * Xw[:, i2] * np.conj(Xw[:, i1 + i2]) / nt ** 2 / (nt / T)) * T
-m_B = np.mean(s_B, axis=0)
-# # # Set zero on X & Y axis
-m_B[0, :] = 0
-m_B[:, 0] = 0
-
-m_B_Ampl = np.absolute(m_B)
-m_B_Real = np.real(m_B)
-m_B_Imag = np.imag(m_B)
 
 ########################################################################################################################
 # Reconstructing the phase angles
@@ -168,10 +121,24 @@ B[np.isnan(B)] = 0
 samples_PC = np.fft.fftn(B, [nt])
 samples_PC = np.real(samples_PC)
 print('Time taken for BSRM with FFt is', time.time() - time2)
+########################################################################################################################
+# Estimating the Bispectrum
 
-P_PC = estimate_PSD(samples_PC, nt, T)[1]
+Xw = np.fft.fft(samples_BSRM, axis=1)
+Xw = Xw[:, :nf]
 
-plt.figure()
-plt.plot(P_PC)
-plt.plot(P)
-plt.show()
+# Bispectrum
+s_B = np.zeros([nsamples, nf, nf])
+s_B = s_B + 1.0j * s_B
+for i1 in range(nf):
+    for i2 in range(nf - i1):
+        s_B[:, i1, i2] = s_B[:, i1, i2] + (Xw[:, i1] * Xw[:, i2] * np.conj(Xw[:, i1 + i2]) / nt ** 2 / (nt / T)) * T
+m_B = np.mean(s_B, axis=0)
+# # # Set zero on X & Y axis
+m_B[0, :] = 0
+m_B[:, 0] = 0
+
+m_B_Ampl = np.absolute(m_B)
+m_B_Real = np.real(m_B)
+m_B_Imag = np.imag(m_B)
+########################################################################################################################
