@@ -1,17 +1,27 @@
+from tools import *
 from SRM import *
 
-class BSRM(SRM):
-    def __init__(self, n_sim, S, B, dt, dw, nt, nw, case='uni', g=None):
-        super().__init__(n_sim, S, dw, nt, nw, case='uni', g=None)
+class BSRM():
+    def __init__(self, n_sim, S, B, dt, dw, nt, nw, test, case='uni', g=None):
+        self.n_sim = n_sim
+        self.nw = nw
+        self.nt = nt
+        self.dw = dw
         self.dt = dt
+        self.n = len(S.shape)
+        self.S = S
         self.B = B
         self.B_Ampl = np.absolute(B)
         self.B_Real = np.real(B)
         self.B_Imag = np.imag(B)
         self.Biphase = np.arctan2(self.B_Imag, self.B_Real)
         self.Biphase[np.isnan(self.Biphase)] = 0
+        self.phi = np.random.uniform(size=np.append(self.n_sim, np.ones(self.n, dtype=np.int32) * self.nw)) * 2 * np.pi
         self._compute_bicoherence()
-        self.samples = self._simulate_bsrm_uni()
+        if test=='new':
+            self.samples = self._simulate_bsrm_uni()
+        elif test == 'old':
+            self.samples = self._simulate_bsrm_uni_old()
 
     def _compute_bicoherence(self):
         self.Bc2 = np.zeros_like(self.B_Real)
@@ -38,7 +48,24 @@ class BSRM(SRM):
             self.PP[i] = self.S[i] * (1 - self.sum_Bc2[i])
 
     def _simulate_bsrm_uni(self):
-        # samples_1 shows the contribution of the Pure Power Spectrum
+        Coeff = (2 ** self.n) * np.sqrt(self.S * np.prod(self.dw))
+        Phi_e = np.exp(self.phi * 1.0j)
+        Biphase_e = np.exp(self.Biphase * 1.0j)
+        B = np.sqrt(1 - self.sum_Bc2) * Phi_e
+        Bc = np.sqrt(self.Bc2)
+
+        for i in range(self.nw):
+            for j in range(1, int(np.ceil((i + 1) / 2))):
+                w1 = j
+                w2 = i - j
+                B[:, i] = B[:, i] + Bc[w1, w2] * Biphase_e[w1, w2] * Phi_e[:, w1] * Phi_e[:, w2]
+
+        B = B * Coeff
+        B[np.isnan(B)] = 0
+        samples = np.real(np.fft.fftn(B, [self.nt]))
+        return samples
+
+    def _simulate_bsrm_uni_old(self):
         obj = SRM(self.n_sim, self.PP, self.dw, self.nt, self.nw, case='uni', g=None)
         samples_1 = obj.samples
         self.phi = obj.phi

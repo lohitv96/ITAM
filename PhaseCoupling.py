@@ -90,15 +90,6 @@ print('Time to run BSRM is', time.time() - time1)
 Phi = obj.phi
 
 ########################################################################################################################
-# Reconstructing the phase angles
-
-B1 = np.fft.ifft(samples_BSRM)
-B2 = B1[:, :nf]
-B2[:, 0] = B2[:, 0] + B1[:, 128]
-temp = np.conjugate(np.flip(B1[:, nf+1:], axis=1))
-B2[:, 1:] = B2[:, 1:] + np.conjugate(np.flip(B1[:, nf+1:], axis=1))
-
-########################################################################################################################
 # BSRM with Fourier Transform
 
 time2 = time.time()

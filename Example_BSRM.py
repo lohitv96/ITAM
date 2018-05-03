@@ -5,11 +5,11 @@ from BSRM import *
 plt.style.use('seaborn')
 
 # Input parameters
-T = 100  # Time(1 / T = dw)
+T = 20  # Time(1 / T = dw)
 nt = 256  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
 nf = 128 # Num of Discretized Freq.
-nsamples = 10000  # Num.of samples
+nsamples = 512  # Num.of samples
 
 # # Generation of Input Data(Stationary)
 dt = T / nt
@@ -43,26 +43,33 @@ B_Imag[:, 0] = 0
 B_Complex = B_Real + 1j * B_Imag
 B_Ampl = np.absolute(B_Complex)
 
-obj = BSRM(nsamples, P, B_Complex, dt, df, nt, nf)
+import time
+
+time1 = time.time()
+obj = BSRM(nsamples, P, B_Complex, dt, df, nt, nf, test='old')
 samples = obj.samples
+print('Time taken is', time.time() - time1)
 
-Xw = np.fft.fft(samples, axis=1)
-Xw = Xw[:, :nf]
+# np.savetxt('Phi.txt', obj.phi)
+# np.savetxt('samples_python.txt', obj.samples)
 
-# Bispectrum
-s_B = np.zeros([nsamples, nf, nf])
-s_B = s_B + 1.0j*s_B
-for i1 in range(nf):
-    for i2 in range(nf - i1):
-        s_B[:, i1, i2] = s_B[:, i1, i2] + (Xw[:, i1] * Xw[:, i2] * np.conj(Xw[:, i1 + i2]) / nt ** 2 / (nt / T)) * T
-m_B = np.mean(s_B, axis=0)
-# # # Set zero on X & Y axis
-m_B[0, :] = 0
-m_B[:, 0] = 0
-
-m_B_Ampl = np.absolute(m_B)
-m_B_Real = np.real(m_B)
-m_B_Imag = np.imag(m_B)
+# Xw = np.fft.fft(samples, axis=1)
+# Xw = Xw[:, :nf]
+#
+# # Bispectrum
+# s_B = np.zeros([nsamples, nf, nf])
+# s_B = s_B + 1.0j*s_B
+# for i1 in range(nf):
+#     for i2 in range(nf - i1):
+#         s_B[:, i1, i2] = s_B[:, i1, i2] + (Xw[:, i1] * Xw[:, i2] * np.conj(Xw[:, i1 + i2]) / nt ** 2 / (nt / T)) * T
+# m_B = np.mean(s_B, axis=0)
+# # # # Set zero on X & Y axis
+# m_B[0, :] = 0
+# m_B[:, 0] = 0
+#
+# m_B_Ampl = np.absolute(m_B)
+# m_B_Real = np.real(m_B)
+# m_B_Imag = np.imag(m_B)
 
 # # Plotting the Estimated Real Bispectrum function
 # fig = plt.figure(10)
@@ -81,3 +88,15 @@ m_B_Imag = np.imag(m_B)
 # ax.set_xlabel('$\omega_1$')
 # ax.set_ylabel('$\omega_2$')
 # plt.show()
+#
+# print('The estimate of mean is', np.mean(samples), 'whereas the expected mean is 0.000')
+# print('The estimate of variance is', np.mean(np.var(samples, axis=0)), 'whereas the expected variance is',
+#       np.sum(P) * 2 * df)
+#
+# from scipy.stats import skew, moment
+#
+# print('The estimate of third moment is', np.mean(moment(samples, moment=3, axis=0)), 'whereas the expected value is',
+#       np.sum(b) * 6 * df ** 2)
+#
+# print('The estimate of skewness is', np.mean(skew(samples, axis=0)), 'whereas the expected variance is',
+#       (np.sum(b) * 6 * df ** 2) / (np.sum(P) * 2 * df) ** (3 / 2))
