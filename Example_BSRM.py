@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
+from scipy.stats import skew, moment, kurtosis
 from mpl_toolkits.mplot3d import Axes3D
 from BSRM import *
+from SRM import *
 
 plt.style.use('seaborn')
 
@@ -8,8 +10,8 @@ plt.style.use('seaborn')
 T = 20  # Time(1 / T = dw)
 nt = 256  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
-nf = 128 # Num of Discretized Freq.
-nsamples = 512  # Num.of samples
+nf = 128  # Num of Discretized Freq.
+nsamples = 10000  # Num.of samples
 
 # # Generation of Input Data(Stationary)
 dt = T / nt
@@ -43,20 +45,13 @@ B_Imag[:, 0] = 0
 B_Complex = B_Real + 1j * B_Imag
 B_Ampl = np.absolute(B_Complex)
 
-import time
-
-time1 = time.time()
-obj = BSRM(nsamples, P, B_Complex, dt, df, nt, nf, test='old')
+obj = BSRM(nsamples, P, B_Complex, dt, df, nt, nf)
 samples = obj.samples
-print('Time taken is', time.time() - time1)
-
-# np.savetxt('Phi.txt', obj.phi)
-# np.savetxt('samples_python.txt', obj.samples)
 
 # Xw = np.fft.fft(samples, axis=1)
 # Xw = Xw[:, :nf]
-#
-# # Bispectrum
+
+# # Estimating the Bispectrum
 # s_B = np.zeros([nsamples, nf, nf])
 # s_B = s_B + 1.0j*s_B
 # for i1 in range(nf):
@@ -79,7 +74,7 @@ print('Time taken is', time.time() - time1)
 # ax.set_xlabel('$\omega_1$')
 # ax.set_ylabel('$\omega_2$')
 # plt.show()
-#
+
 # # Plotting the Estimated Imaginary Bispectrum function
 # fig = plt.figure(11)
 # ax = fig.gca(projection='3d')
@@ -88,15 +83,17 @@ print('Time taken is', time.time() - time1)
 # ax.set_xlabel('$\omega_1$')
 # ax.set_ylabel('$\omega_2$')
 # plt.show()
-#
-# print('The estimate of mean is', np.mean(samples), 'whereas the expected mean is 0.000')
-# print('The estimate of variance is', np.mean(np.var(samples, axis=0)), 'whereas the expected variance is',
-#       np.sum(P) * 2 * df)
-#
-# from scipy.stats import skew, moment
-#
-# print('The estimate of third moment is', np.mean(moment(samples, moment=3, axis=0)), 'whereas the expected value is',
-#       np.sum(b) * 6 * df ** 2)
-#
-# print('The estimate of skewness is', np.mean(skew(samples, axis=0)), 'whereas the expected variance is',
-#       (np.sum(b) * 6 * df ** 2) / (np.sum(P) * 2 * df) ** (3 / 2))
+
+# Simulation statistics checks
+print('The estimate of mean is', np.mean(samples), 'whereas the expected mean is 0.000')
+print('The estimate of variance is', np.mean(np.var(samples, axis=0)), 'whereas the expected variance is',
+      np.sum(P) * 2 * df)
+print('The estimate of third moment is', np.mean(moment(samples, moment=3, axis=0)), 'whereas the expected value is',
+      np.sum(b) * 6 * df ** 2)
+print('The estimate of skewness is', np.mean(skew(samples, axis=0)), 'whereas the expected skewness is',
+      (np.sum(b) * 6 * df ** 2) / (np.sum(P) * 2 * df) ** (3 / 2))
+
+
+plt.figure()
+plt.hist(samples.flatten(), bins=1000, normed=True)
+plt.show()

@@ -9,14 +9,7 @@ def itam_srm(S, beta, w, t, CDF, mu, sig, parameter1, parameter2):
         m = n
     S_NGT = S
     S_G0 = S
-    W = w[-1]  # Upper cutoff frequency
-    dw = w[1] - w[0]
-    T = t[-1]
-    dt = t[1] - t[0]
 
-    t_u = 2 * np.pi / (2 * W)
-    if dt > t_u:
-        print('ERROR:: Condition of delta_t <= 2*pi/(2*W_u)')
     # Computing the Non-Gaussian parameters
     R_NGT = R_to_r(S_to_R(S_NGT, w, t))
 
@@ -123,7 +116,7 @@ def itam_srm(S, beta, w, t, CDF, mu, sig, parameter1, parameter2):
         for i in range(S_NG0.shape[0]):
             for j in range(S_NG0.shape[1]):
                 if S_NG0[i, j] != 0:
-                    S_G1[i, j] = ((S_NGT[i, j] / S_NG0[i, j])) ** beta * S_G0[i, j]
+                    S_G1[i, j] = (S_NGT[i, j] / S_NG0[i, j]) ** beta * S_G0[i, j]
                 else:
                     S_G1[i, j] = 0
 
@@ -146,4 +139,3 @@ def itam_srm(S, beta, w, t, CDF, mu, sig, parameter1, parameter2):
     S_G_Converged = S_G0
     S_NG_Converged = S_NG0
     return S_G_Converged, S_NG_Converged
-

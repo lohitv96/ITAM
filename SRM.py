@@ -1,5 +1,6 @@
 from tools import *
 
+
 class SRM:
     def __init__(self, n_sim, S, dw, nt, nw, case='uni', g=None):
         # TODO: Error check for all the variables
@@ -22,10 +23,9 @@ class SRM:
             self.samples = self._simulate_multi(self.phi)
 
     def _simulate_uni(self, phi):
-        B = (2 ** self.n) * np.exp(phi * 1.0j) * np.sqrt(self.S * np.prod(self.dw))
+        B = np.exp(phi * 1.0j) * np.sqrt(2 ** (self.n + 1) * self.S * np.prod(self.dw))
         sample = np.fft.fftn(B, np.ones(self.n, dtype=np.int32) * self.nt)
         samples = np.real(sample)
-        # samples = translate_process(samples, self.Dist, self.mu, self.sig, self.parameter1, self.parameter2)
         return samples
 
     def _simulate_multi(self, phi):

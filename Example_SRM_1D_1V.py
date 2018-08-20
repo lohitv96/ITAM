@@ -1,6 +1,5 @@
 from SRM import *
 import matplotlib.pyplot as plt
-from statsmodels.distributions.empirical_distribution import ECDF
 
 plt.style.use('seaborn')
 
@@ -8,8 +7,8 @@ plt.style.use('seaborn')
 T = 100  # Time(1 / T = dw)
 nt = 256  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
-nw = 128 # Num of Discretized Freq.
-n_sim = 100000  # Num.of samples
+nw = 128  # Num of Discretized Freq.
+n_sim = 10000  # Num.of samples
 
 # # Generation of Input Data(Stationary)
 dt = T / nt

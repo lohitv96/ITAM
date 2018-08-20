@@ -32,29 +32,7 @@ g_13 = np.exp(-3.478 * np.linalg.norm(xy_list, axis=0))
 g_23 = np.exp(-3.392 * np.linalg.norm(xy_list, axis=0))
 
 S_list = np.array([S_11, S_22, S_33])
-S_list = np.sqrt(S_list)
-S_jk = np.einsum('i...,j...->ij...', S_list, S_list)
+g_list = np.array([g_12, g_13, g_23])
 
-# Use transpose technique to deal with symmetry
-g_jk = np.zeros_like(S_jk)
-g_jk[0, 0, :] = np.ones(shape=[nw, nw, nw])
-g_jk[0, 1, :] = g_12
-g_jk[0, 2, :] = g_13
-g_jk[1, 0, :] = g_12
-g_jk[1, 1, :] = np.ones(shape=[nw, nw, nw])
-g_jk[1, 2, :] = g_23
-g_jk[2, 0, :] = g_13
-g_jk[2, 1, :] = g_23
-g_jk[2, 2, :] = np.ones(shape=[nw, nw, nw])
-
-S = S_jk * g_jk
-S = np.einsum('ij...->...ij', S)
-H_jk = np.linalg.cholesky(S)
-
-for i in range(nw):
-    for j in range(nw):
-        for k in range(nw):
-            H_jk[:, :, i, j, k] = np.linalg.cholesky(S[:, :, i, j, k])
-    # except:
-    #     H_jk[:, :, i] = np.linalg.cholesky(nearestPD(S[:, :, i]))
-
+SRM_object = SRM(10, S_list, dw, nt, nw, case='multi', g=g_list)
+samples = SRM_object.samples

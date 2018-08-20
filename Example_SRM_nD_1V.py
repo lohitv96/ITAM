@@ -17,7 +17,7 @@ x_list = [np.linspace(0, W[i] - dw[i], nw) for i in range(dim)]
 xy_list = np.array(np.meshgrid(*x_list, indexing='ij'))
 S = 125 / 4 * np.linalg.norm(xy_list, axis=0) ** 2 * np.exp(-5 * np.linalg.norm(xy_list, axis=0))
 
-n_sim = 100
+n_sim = 1
 
 SRM_object = SRM(n_sim, S, dw, nt, nw, case='uni')
 samples = SRM_object.samples
@@ -33,3 +33,5 @@ samples = SRM_object.samples
 # ax.set_ylabel('$t_2$')
 # plt.show()
 
+print(np.var(samples))
+print(np.sum(S)*np.prod(dw)*2**dim)

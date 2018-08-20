@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats as stats
 from scipy import interpolate
-from scipy.integrate import simps
+import itertools
 
 
 def _getAplus(A):
