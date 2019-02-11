@@ -8,15 +8,15 @@ plt.style.use('seaborn')
 
 # # Generate a series of theta
 nsamples = 1024
-num_batches = 12
+num_batches = 24
 ########################################################################################################################
 # Input parameters
 dim = 2
 
 T = 20  # Time(1 / T = dw)
-nt = 128  # Num.of Discretized Time
+nt = 1024  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
-nf = 64  # Num of Discretized Freq.
+nf = 512  # Num of Discretized Freq.
 
 # # Generation of Input Data(Stationary)
 dt = T / nt
@@ -91,14 +91,14 @@ Coeff = np.sqrt(2 ** (dim + 1) * df ** dim * P)
 Biphase_e = np.exp(Biphase * 1.0j)
 Bc = np.sqrt(Bc2)
 
-# # save the simulation data
-# P.tofile('data/P.csv')
-# B_Complex.tofile('data/B_Complex.csv')
-# PP.tofile('data/PP.csv')
-# sum_Bc2.tofile('data/sum_Bc2.csv')
-# Bc.tofile('data/Bc.csv')
-# Coeff.tofile('data/Coeff.csv')
-# Biphase_e.tofile('data/Biphase_e.csv')
+# save the simulation data
+np.save('data/P.npy', P)
+np.save('data/B_Complex.npy', B_Complex)
+np.save('data/PP.npy', PP)
+np.save('data/sum_Bc2.npy', sum_Bc2)
+np.save('data/Bc.npy', Bc)
+np.save('data/Coeff.npy', Coeff)
+np.save('data/Biphase_e.npy', Biphase_e)
 
 # # loading the simulation data
 # P = np.fromfile('data/P.csv').reshape([128, 128])
@@ -109,47 +109,48 @@ Bc = np.sqrt(Bc2)
 # Coeff = np.fromfile('data/Coeff.csv').reshape([128, 128])
 # Biphase_e = np.fromfile('data/Biphase_e.csv').reshape([128, 128, 128, 128])
 
-# def simulate():
-#     Phi = np.random.uniform(size=np.append(nsamples, np.ones(dim, dtype=np.int32) * nf)) * 2 * np.pi
-#     Phi_e = np.exp(Phi * 1.0j)
-#     B = np.sqrt(1 - sum_Bc2) * Phi_e
-#     Phi_e = np.einsum('i...->...i', Phi_e)
-#     B = np.einsum('i...->...i', B)
-#
-#     for i in itertools.product(*ranges):
-#         wk = np.array(i)
-#         for j in itertools.product(*[range(k) for k in np.int32(np.ceil((wk + 1) / 2))]):
-#             wj = np.array(j)
-#             wi = wk - wj
-#             B[(*wk, *[])] = B[(*wk, *[])] + Bc[(*wi, *wj)] * Biphase_e[(*wi, *wj)] * Phi_e[(*wi, *[])] * \
-#                             Phi_e[(*wj, *[])]
-#
-#     B = np.einsum('...i->i...', B)
-#     Phi_e = np.einsum('...i->i...', Phi_e)
-#     B_temp = B * Coeff
-#     B_temp[np.isnan(B_temp)] = 0
-#     samples = np.fft.fftn(B_temp, [nt, nt])
-#     samples = np.real(samples)
-#     # samples = samples.reshape([nt, nt])
-#     return samples
+
+def simulate():
+    Phi = np.random.uniform(size=np.append(nsamples, np.ones(dim, dtype=np.int32) * nf)) * 2 * np.pi
+    Phi_e = np.exp(Phi * 1.0j)
+    B = np.sqrt(1 - sum_Bc2) * Phi_e
+    Phi_e = np.einsum('i...->...i', Phi_e)
+    B = np.einsum('i...->...i', B)
+
+    for i in itertools.product(*ranges):
+        wk = np.array(i)
+        for j in itertools.product(*[range(k) for k in np.int32(np.ceil((wk + 1) / 2))]):
+            wj = np.array(j)
+            wi = wk - wj
+            B[(*wk, *[])] = B[(*wk, *[])] + Bc[(*wi, *wj)] * Biphase_e[(*wi, *wj)] * Phi_e[(*wi, *[])] * \
+                            Phi_e[(*wj, *[])]
+
+    B = np.einsum('...i->i...', B)
+    Phi_e = np.einsum('...i->i...', Phi_e)
+    B_temp = B * Coeff
+    B_temp[np.isnan(B_temp)] = 0
+    samples = np.fft.fftn(B_temp, [nt, nt])
+    samples = np.real(samples)
+    # samples = samples.reshape([nt, nt])
+    return samples
 
 # Plotting of individual samples
-import matplotlib.pyplot as plt
-from pylab import *
-from mpl_toolkits.mplot3d import Axes3D
-from matplotlib import cm
-
-t_list = [t for _ in range(dim)]
-T = np.array(np.meshgrid(*t_list, indexing='ij'))
-
-fig1 = plt.figure()
-plt.title('2d random field with a prescribed Power Spectrum and Bispectrum')
-pcm = pcolor(T[0], T[1], samples, cmap='RdBu_r', vmin=-30, vmax=30)
-plt.colorbar(pcm, extend='both', orientation='vertical')
-plt.xlabel('$X_{1}$')
-plt.ylabel('$X_{2}$')
-plt.savefig('BSRM samples')
-plt.show()
+# import matplotlib.pyplot as plt
+# from pylab import *
+# from mpl_toolkits.mplot3d import Axes3D
+# from matplotlib import cm
+#
+# t_list = [t for _ in range(dim)]
+# T = np.array(np.meshgrid(*t_list, indexing='ij'))
+#
+# fig1 = plt.figure()
+# plt.title('2d Random Field')
+# pcm = pcolor(T[0], T[1], samples, cmap='RdBu_r', vmin=-30, vmax=30)
+# plt.colorbar(pcm, extend='both', orientation='vertical')
+# plt.xlabel('$X_{1}$')
+# plt.ylabel('$X_{2}$')
+# plt.savefig('BSRM samples')
+# plt.show()
 #
 # fig2 = plt.figure()
 # plt.title('2d random field with a prescribed Power Spectrum')
@@ -164,8 +165,8 @@ plt.show()
 samples_list = Parallel(n_jobs=4)(delayed(simulate)() for _ in range(num_batches))
 samples1 = np.concatenate(samples_list, axis=0)
 
-# # saving the samples data
-# samples1.tofile('data/samples.csv')
+# saving the samples data
+np.save('data/samples.npy', samples1)
 #
 # # loading the samples data
 # samples1 = np.fromfile('data/samples.csv').reshape([num_batches * nsamples, nt, nt])

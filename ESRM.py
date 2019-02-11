@@ -1,7 +1,7 @@
 from tools import *
 
 
-class SRM:
+class ESRM:
     def __init__(self, n_sim, S, dw, nt, nw, case='uni', g=None):
         # TODO: Error check for all the variables
         # TODO: Division by 2 to deal with zero frequency for all cases
@@ -44,7 +44,6 @@ class SRM:
         for i in range(self.m):
             g_jk[i, i] = np.ones_like(S_jk[0, 0])
         S = S_jk * g_jk
-        self.S = S
 
         S = np.einsum('ij...->...ij', S)
         S1 = S[..., :, :]

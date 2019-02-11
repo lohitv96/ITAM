@@ -13,7 +13,8 @@ nt = 256  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
 nf = 128  # Num of Discretized Freq.
 nsamples = 100  # Num.of samples
-nbatches = 4
+nbatches = 12
+ncores = 4
 
 # # Generation of Input Data(Stationary)
 dt = T / nt
@@ -35,7 +36,7 @@ fx = f
 fy = f
 Fx, Fy = np.meshgrid(fx, fy)
 
-b = 40 * 2 * 1 / (2 * np.pi) * np.exp(2 * (-1 / 2 * (Fx ** 2 + Fy ** 2)))
+b = 20 * 2 * 1 / (2 * np.pi) * np.exp(2 * (-1 / 2 * (Fx ** 2 + Fy ** 2)))
 B_Real = b
 B_Imag = b
 
@@ -50,9 +51,11 @@ B_Ampl = np.absolute(B_Complex)
 
 def simulate():
     obj = BSRM(nsamples, P, B_Complex, dt, df, nt, nf)
+    samples_BSRM = obj.samples
+    return samples_BSRM
     # obj = SRM(nsamples, P, df, nt, nf)
-    samples = obj.samples
-    return samples
+    # samples_SRM = obj.samples
+    # return samples_SRM
 
 
 def estimate_spectra(samples):
@@ -86,115 +89,73 @@ def estimate_spectra(samples):
     return m_P, m_B, m_T
 
 
-samples_list = Parallel(n_jobs=nbatches)(delayed(simulate)() for _ in range(nbatches))
+samples_list = Parallel(n_jobs=ncores)(delayed(simulate)() for _ in range(nbatches))
 samples = np.concatenate(samples_list, axis=0)
 
-spectra_list = Parallel(n_jobs=nbatches)(
+spectra_list = Parallel(n_jobs=ncores)(
     delayed(estimate_spectra)(samples[i * nsamples:(i + 1) * nsamples]) for i in range(nbatches))
+
 P_spectra = np.zeros(shape=[nf])
 B_spectra = np.zeros(shape=[nf, nf])
 T_spectra = np.zeros(shape=[nf, nf, nf])
+
 for i in range(nbatches):
     P_spectra = P_spectra + spectra_list[i][0] / nbatches
     B_spectra = B_spectra + spectra_list[i][1] / nbatches
     T_spectra = T_spectra + spectra_list[i][2] / nbatches
 
-# m_P_Ampl = np.absolute(P_spectra)
-# m_P_Real = np.real(P_spectra)
-# m_P_Imag = np.imag(P_spectra)
-#
-# m_B[0, :] = 0
-# m_B[:, 0] = 0
-# m_B_Ampl = np.absolute(B_spectra)
-# m_B_Real = np.real(B_spectra)
-# m_B_Imag = np.imag(B_spectra)
-#
-# m_T[0, :, :] = 0
-# m_T[:, 0, :] = 0
-# m_T[:, :, 0] = 0
-# m_T_Ampl = np.absolute(T_spectra)
-# m_T_Real = np.real(T_spectra)
-# m_T_Imag = np.imag(T_spectra)
-#
-# print('Order 2 comparision Samples:', moment(samples.flatten(), moment=2), ' Estimation:',
-#       2 * np.sum(m_P_Real) * df ** 1)
-# print('Order 3 comparision Samples:', moment(samples.flatten(), moment=3), ' Estimation:',
-#       6 * np.sum(m_B_Real) * df ** 2)
+print('Order 2 comparision Samples:', moment(samples.flatten(), moment=2), ' Estimation:',
+      2 * np.sum(np.real(P_spectra)) * df ** 1,  ' Actual:', 2 * np.sum(P) * df ** 1)
+print('Order 3 comparision Samples:', moment(samples.flatten(), moment=3), ' Estimation:',
+      6 * np.sum(np.real(B_spectra)) * df ** 2, ' Actual:', 6 * np.sum(B_Real) * df ** 2)
+print('Trying to understand:')
+print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
+      3*(2 * np.sum(np.real(P_spectra)) * df ** 1)**2 + 24 * np.sum(np.real(T_spectra)) * df ** 3)
+
 # print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
-#       24 * np.sum(m_T_Real) * df ** 3)
-#
-# # Plotting the Estimated Real Bispectrum function
-# fig = plt.figure(10)
-# ax = fig.gca(projection='3d')
-# h = ax.plot_surface(Fx, Fy, m_B_Real)
-# plt.title('Estimated $\Re{B(\omega_1, \omega_2)}$')
-# ax.set_xlabel('$\omega_1$')
-# ax.set_ylabel('$\omega_2$')
-# plt.show()
-#
-# # Plotting the Estimated Imaginary Bispectrum function
-# fig = plt.figure(11)
-# ax = fig.gca(projection='3d')
-# h = ax.plot_surface(Fx, Fy, m_B_Imag)
-# plt.title('Estimated $\Im{B(\omega_1, \omega_2)}$')
-# ax.set_xlabel('$\omega_1$')
-# ax.set_ylabel('$\omega_2$')
-# plt.show()
+#       64 * np.sum(np.real(T_spectra)) * df ** 3)
 
-# # Simulation statistics checks
-# print('The estimate of mean is', np.mean(samples), 'whereas the expected mean is 0.000')
-# print('The estimate of variance is', np.var(samples.flatten(), axis=0), 'whereas the expected variance is',
-#       np.sum(P) * 2 * df)
-# print('The estimate of third moment is', moment(samples.flatten(), moment=3, axis=0), 'whereas the expected value is',
-#       np.sum(b) * 6 * df ** 2)
-# print('The estimate of skewness is', skew(samples.flatten(), axis=0), 'whereas the expected skewness is',
-#       (np.sum(b) * 6 * df ** 2) / (np.sum(P) * 2 * df) ** (3 / 2))
-# print('The estimate of skewness is', skew(samples.flatten()))
-# print('The estimate of kurtosis is', kurtosis(samples.flatten()))
-#
-# plt.figure()
-# plt.hist(samples.flatten(), bins=1000, normed=True)
-# plt.show()
 
-import numpy as np
+# MARCC data post processing
+# import numpy as np
 
 # samples = np.load('samples.npy')
 # P_spectra = np.load('P_spectra.npy')
 # B_spectra = np.load('B_spectra.npy')
 # T_spectra = np.load('T_spectra.npy')
 
-nsim = 79
-# samples = np.load('samples.npy')
-P_spectra = np.load('P_spectra.npy')
-B_spectra = np.load('B_spectra.npy')
-T_spectra = np.load('T_spectra.npy')
-for i in range(1, nsim + 1):
-    # samples = np.concatenate((samples, np.load('data' + str(i) + '/samples.npy')), axis=0)
-    P_spectra = P_spectra + np.load('data' + str(i) + '/P_spectra.npy')
-    B_spectra = B_spectra + np.load('data' + str(i) + '/B_spectra.npy')
-    T_spectra = T_spectra + np.load('data' + str(i) + '/T_spectra.npy')
-P_spectra = P_spectra/(nsim+1)
-B_spectra = B_spectra/(nsim+1)
-T_spectra = T_spectra/(nsim+1)
+# nsim = 79
+# # samples = np.load('samples.npy')
+# P_spectra = np.load('P_spectra.npy')
+# B_spectra = np.load('B_spectra.npy')
+# T_spectra = np.load('T_spectra.npy')
+# for i in range(1, nsim + 1):
+#     # samples = np.concatenate((samples, np.load('data' + str(i) + '/samples.npy')), axis=0)
+#     P_spectra = P_spectra + np.load('data' + str(i) + '/P_spectra.npy')
+#     B_spectra = B_spectra + np.load('data' + str(i) + '/B_spectra.npy')
+#     T_spectra = T_spectra + np.load('data' + str(i) + '/T_spectra.npy')
+# P_spectra = P_spectra/(nsim+1)
+# B_spectra = B_spectra/(nsim+1)
+# T_spectra = T_spectra/(nsim+1)
 
 # print(np.real(T_spectra[26])[1, 1], np.real(T_spectra[26])[2, 1])
 # print(np.real(B_spectra)[1, 1], np.real(B_spectra)[2, 1])
 
-print('Order 2 comparision Samples:', moment(samples.flatten(), moment=2), ' Estimation:',
-      2 * np.sum(np.real(P_spectra)) * df ** 1)
-print('Order 3 comparision Samples:', moment(samples.flatten(), moment=3), ' Estimation:',
-      6 * np.sum(np.real(B_spectra)) * df ** 2)
-print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
-      24 * np.sum(np.real(T_spectra)) * df ** 3)
-
-T_spectra[0, :, :] = 0
-T_spectra[:, 0, :] = 0
-T_spectra[:, :, 0] = 0
+# print('Order 2 comparision Samples:', moment(samples.flatten(), moment=2), ' Estimation:',
+#       2 * np.sum(np.real(P_spectra)) * df ** 1)
+# print('Order 3 comparision Samples:', moment(samples.flatten(), moment=3), ' Estimation:',
+#       6 * np.sum(np.real(B_spectra)) * df ** 2)
+# print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
+#       24 * np.sum(np.real(T_spectra)) * df ** 3)
+#
+# T_spectra[0, :, :] = 0
+# T_spectra[:, 0, :] = 0
+# T_spectra[:, :, 0] = 0
 
 # # Plotting the Estimated Real Bispectrum function
 # fig = plt.figure(10)
 # ax = fig.gca(projection='3d')
-# h = ax.plot_surface(Fx, Fy, np.absolute(T_spectra[26]))
+# h = ax.plot_surface(Fx, Fy, np.real(T_spectra[26]))
 # plt.title('Estimated $\Re{B(\omega_1, \omega_2)}$')
 # ax.set_xlabel('$\omega_1$')
 # ax.set_ylabel('$\omega_2$')
@@ -203,7 +164,7 @@ T_spectra[:, :, 0] = 0
 # # Plotting the Estimated Real Bispectrum function
 # fig = plt.figure(10)
 # ax = fig.gca(projection='3d')
-# h = ax.plot_surface(Fx, Fy, np.imag(T_spectra[63]))
+# h = ax.plot_surface(Fx, Fy, np.imag(T_spectra[26]))
 # plt.title('Estimated $\Re{B(\omega_1, \omega_2)}$')
 # ax.set_xlabel('$\omega_1$')
 # ax.set_ylabel('$\omega_2$')

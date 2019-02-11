@@ -2,6 +2,8 @@ from SRM import *
 # Kaimal et al. (1972)
 # Example from Deodatis Book Chapter 4
 
+nsamples = 100
+
 T = 10.0
 nt = 800
 dt = T/nt
@@ -24,5 +26,5 @@ m = 3
 S_list = np.array([S_11, S_22, S_33])
 g_list = np.array([g_12, g_13, g_23])
 
-SRM_object = SRM(10000, S_list, dw, nt, nw, case='multi', g=g_list)
+SRM_object = SRM(nsamples, S_list, dw, nt, nw, case='multi', g=g_list)
 samples = SRM_object.samples
