@@ -7,16 +7,16 @@ from BSRM import *
 plt.style.use('seaborn')
 
 # # Generate a series of theta
-nsamples = 1024
-num_batches = 24
+nsamples = 10
+num_batches = 4
 ########################################################################################################################
 # Input parameters
 dim = 2
 
 T = 20  # Time(1 / T = dw)
-nt = 1024  # Num.of Discretized Time
+nt = 128  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
-nf = 512  # Num of Discretized Freq.
+nf = int(nt/2)  # Num of Discretized Freq.
 
 # # Generation of Input Data(Stationary)
 dt = T / nt
@@ -26,7 +26,7 @@ f = np.linspace(0, F - df, nf)
 
 f_list = [f for _ in range(dim)]
 F_P = np.array(np.meshgrid(*f_list, indexing='ij'))
-P = 20 / np.sqrt(2 * np.pi) * np.exp(-1/2 * np.linalg.norm(F_P, axis=0) ** 2)
+P = 20 / np.sqrt(2 * np.pi) * np.exp(-1/2 * np.linalg.norm(F_P, axis=0) ** 2 - 1 / 2 * F_P[0] * F_P[1])
 
 t_u = 2 * np.pi / (2 * 2 * np.pi * F)
 if dt * 0.99 > t_u:
@@ -35,7 +35,9 @@ if dt * 0.99 > t_u:
     print('\n')
 
 F_B = np.meshgrid(*[*f_list, *f_list])
-b = 40 / (2 * np.pi) * np.exp(2 * (-1/2 * np.linalg.norm(F_B, axis=0) ** 2))
+b = 40 / (2 * np.pi) * np.exp(
+    -1 * np.linalg.norm(F_B, axis=0) ** 2 - 1 * F_B[0] * F_B[1] - 1 * F_B[0] * F_B[2] - 1 * F_B[0] * F_B[3] - 1 * F_B[
+        1] * F_B[2] - 1 * F_B[1] * F_B[3] - 1 * F_B[2] * F_B[3])
 B_Real = deepcopy(b)
 B_Imag = deepcopy(b)
 
@@ -94,7 +96,7 @@ Bc = np.sqrt(Bc2)
 # save the simulation data
 np.save('data/P.npy', P)
 np.save('data/B_Complex.npy', B_Complex)
-np.save('data/PP.npy', PP)
+np.save('data/SP.npy', PP)
 np.save('data/sum_Bc2.npy', sum_Bc2)
 np.save('data/Bc.npy', Bc)
 np.save('data/Coeff.npy', Coeff)
@@ -103,7 +105,7 @@ np.save('data/Biphase_e.npy', Biphase_e)
 # # loading the simulation data
 # P = np.fromfile('data/P.csv').reshape([128, 128])
 # B_Complex = np.fromfile('data/B_Complex.csv').reshape([128, 128, 128, 128])
-# PP = np.fromfile('data/PP.csv').reshape([128, 128])
+# SP = np.fromfile('data/SP.csv').reshape([128, 128])
 # sum_Bc2 = np.fromfile('data/sum_Bc2.csv').reshape([128, 128])
 # Bc = np.fromfile('data/Bc.csv').reshape([128, 128, 128, 128])
 # Coeff = np.fromfile('data/Coeff.csv').reshape([128, 128])
@@ -171,12 +173,12 @@ np.save('data/samples.npy', samples1)
 # # loading the samples data
 # samples1 = np.fromfile('data/samples.csv').reshape([num_batches * nsamples, nt, nt])
 
-print('The estimate of mean is', np.mean(samples), 'whereas the expected mean is 0.000')
-print('The estimate of variance is', np.var(samples.flatten()), 'whereas the expected variance is',
+print('The estimate of mean is', np.mean(samples1), 'whereas the expected mean is 0.000')
+print('The estimate of variance is', np.var(samples1.flatten()), 'whereas the expected variance is',
       np.sum(P) * 4 * df ** 2)
-print('The estimate of the third moment is ', moment(samples.flatten(), moment=3, axis=0),
+print('The estimate of the third moment is ', moment(samples1.flatten(), moment=3, axis=0),
       'whereas the expected third moment is ', np.sum(B_Real) * 9 * df ** 4)
-print('The estimate of skewness is', skew(samples.flatten(), axis=0), 'whereas the expected skewness is',
+print('The estimate of skewness is', skew(samples1.flatten(), axis=0), 'whereas the expected skewness is',
       (np.sum(B_Real) * 9 * df ** 4) / (np.sum(P) * 4 * df ** 2) ** (3 / 2))
 
 # B_list = []
@@ -199,7 +201,7 @@ print('The estimate of skewness is', skew(samples.flatten(), axis=0), 'whereas t
 #
 # for i in range(1024):
 #     print(i)
-#     for i1 in range(nf):
+  #     for i1 in range(nf):
 #         for i2 in range(nf):
 #             for j1 in range(nf - i1):
 #                 for j2 in range(nf - i2):

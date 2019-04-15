@@ -18,7 +18,7 @@ w = np.linspace(0, F - dw, nw)
 
 t_u = 2*np.pi/2/F
 
-if dt>t_u:
+if dt > t_u:
     print('Error')
 
 # Defining the Power Spectrum Density Function

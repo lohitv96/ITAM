@@ -38,17 +38,12 @@ def estimate_cross_bispectrum(samples):
 # Input Part
 
 nsamples = 10000
-n = 2  # Number of dimensions
+n = 1  # Number of dimensions
 m = 2  # Number of variables
 
-W = np.array([2.0, 2.0])  # Cutoff Frequency
+W = 2.0  # Cutoff Frequency
 nw = 400  # Number of frequency steps
 dw = W / nw  # Length of frequency step
-
-x_list = np.array([np.linspace(dw[i], W[i], nw) for i in range(n)])
-xy_list = np.array(np.meshgrid(*x_list, indexing='ij'))
-# S = 125 / 4 * np.linalg.norm(xy_list, axis=0) ** 2 * np.exp(-5 * np.linalg.norm(xy_list, axis=0))
-
 w = np.linspace(dw, W, nw)  # frequency vector
 wx, wy = np.meshgrid(w, w)  # Frequency mesh
 
@@ -58,11 +53,11 @@ dt = T / nt  # Duration of time step
 t = np.linspace(dt, T, nt)  # Vector of time
 
 # Diagonal elements of the Multi-variate Power Spectrum
-S_11 = 38.3 / (1 + 6.19 * np.sum(xy_list, axis=0)) ** (5 / 3)
-S_22 = 43.4 / (1 + 6.98 * np.sum(xy_list, axis=0)) ** (5 / 3)
+S_11 = 38.3 / (1 + 6.19 * w) ** (5 / 3)
+S_22 = 43.4 / (1 + 6.98 * w) ** (5 / 3)
 
 # Gamma values of the Multi-variate Power Spectrum
-g_s_12 = np.exp(-2 * np.sum(xy_list))
+g_s_12 = np.exp(-2 * w)
 
 # Diagonal elements of the Multi-variate Bispectrum
 B_111 = 50 / (1 + 6.19 * (wx + wy)) ** (5 / 3)
@@ -205,10 +200,3 @@ print(6*np.sum(B[:, :, 0, 0, 0])*dw**2/(2*np.sum(S[:, 0, 0])*dw)**(3/2))
 # Checking if the 2nd-order statistcs are satisfied
 
 # Checking if the 3rd-order statistcs are satisfied
-
-n = 10
-sum = 0
-for i in range(1, n+1):
-    for j in range(i, n+1):
-        sum += j
-print(sum)

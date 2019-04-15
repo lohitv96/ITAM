@@ -12,18 +12,19 @@ T = 20  # Time(1 / T = dw)
 nt = 256  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
 nf = 128  # Num of Discretized Freq.
-nsamples = 100  # Num.of samples
-nbatches = 12
+nsamples = 50  # Num.of samples
+nbatches = 4
 ncores = 4
 
 # # Generation of Input Data(Stationary)
 dt = T / nt
-t = np.linspace(0, T - dt, nt)
+t = np.linspace(dt, T, nt)
 df = F / nf
-f = np.linspace(0, F - df, nf)
+f = np.linspace(df, F, nf)
 
 # Target PSDF(stationary)
 P = 20 * 1 / np.sqrt(2 * np.pi) * np.exp(-1 / 2 * f ** 2)
+P[0] = 0.00001
 
 t_u = 2 * np.pi / (2 * 2 * np.pi * F)
 if dt * 0.99 > t_u:
@@ -58,59 +59,56 @@ def simulate():
     # return samples_SRM
 
 
-def estimate_spectra(samples):
+def estimate_third_order_interactions(samples):
     Xw = np.fft.fft(samples, axis=1)
     Xw = Xw[:, :nf]
+    temp = np.zeros(shape=[nf, nf, nf, nf])
+    for j in range(len(samples)):
+        temp = temp + np.einsum('i, j, k->ijk', Xw[j], Xw[j], Xw[j])
+    return temp/nsamples
 
-    s_P = np.zeros([nsamples, nf])
-    s_P = s_P + 1.0j * s_P
-    s_B = np.zeros([nsamples, nf, nf])
-    s_B = s_B + 1.0j * s_B
-    s_T = np.zeros([nsamples, nf, nf, nf])
-    s_T = s_T + 1.0j * s_T
-    # s_Q = np.zeros([nf, nf, nf, nf])
-    # s_Q = s_Q + 1.0j * s_Q
 
-    for i1 in range(nf):
-        s_P[:, i1] = s_P[:, i1] + Xw[:, i1] * np.conj(Xw[:, i1])
-        for i2 in range(nf - i1):
-            s_B[:, i1, i2] = s_B[:, i1, i2] + Xw[:, i1] * Xw[:, i2] * np.conj(Xw[:, i1 + i2])
-            for i3 in range(nf - i1 - i2):
-                s_T[:, i1, i2, i3] = s_T[:, i1, i2, i3] + Xw[:, i1] * Xw[:, i2] * Xw[:, i3] * np.conj(
-                    Xw[:, i1 + i2 + i3])
-                # for i4 in range(nf - i1 - i2 - i3):
-                #     s_Q[i1, i2, i3, i4] = s_Q[i1, i2, i3, i4] + Xw[i, i1] * Xw[i, i2] * Xw[i, i3] * Xw[i, i4] * np.conj(
-                #         Xw[i, i1 + i2 + i3 + i4])
-
-    m_P = np.mean(s_P, axis=0) * (T ** 1) / nt ** 2
-    m_B = np.mean(s_B, axis=0) * (T ** 2) / nt ** 3
-    m_T = np.mean(s_T, axis=0) * (T ** 3) / nt ** 4
-    # m_Q = s_Q * (T ** 4) / nt ** 5 / nsamples
-    return m_P, m_B, m_T
+def estimate_fourth_order_interactions(samples):
+    Xw = np.fft.fft(samples, axis=1)
+    Xw = Xw[:, :nf]
+    temp = np.zeros(shape=[nf, nf, nf, nf])
+    for k in range(len(samples)):
+        temp = temp + np.einsum('i, j, k, l->ijkl', Xw[k], Xw[k], Xw[k], Xw[k])
+    return temp/nsamples
 
 
 samples_list = Parallel(n_jobs=ncores)(delayed(simulate)() for _ in range(nbatches))
 samples = np.concatenate(samples_list, axis=0)
 
-spectra_list = Parallel(n_jobs=ncores)(
-    delayed(estimate_spectra)(samples[i * nsamples:(i + 1) * nsamples]) for i in range(nbatches))
+third_order_data_list = Parallel(n_jobs=2)(
+    delayed(estimate_third_order_interactions)(samples[i * nsamples:(i + 1) * nsamples]) for i in range(nbatches))
+third_order_data = np.mean(third_order_data_list, axis=0)
+fourth_order_data_list = Parallel(n_jobs=2)(
+    delayed(estimate_fourth_order_interactions)(samples[i * nsamples:(i + 1) * nsamples]) for i in range(nbatches))
+fourth_order_data = np.mean(fourth_order_data_list, axis=0)
 
-P_spectra = np.zeros(shape=[nf])
-B_spectra = np.zeros(shape=[nf, nf])
-T_spectra = np.zeros(shape=[nf, nf, nf])
+np.save('third_order_coupling_data.npy', third_order_data)
+np.save('fourth_order_coupling_data.npy', fourth_order_data)
 
-for i in range(nbatches):
-    P_spectra = P_spectra + spectra_list[i][0] / nbatches
-    B_spectra = B_spectra + spectra_list[i][1] / nbatches
-    T_spectra = T_spectra + spectra_list[i][2] / nbatches
+# spectra_list = Parallel(n_jobs=ncores)(
+#     delayed(estimate_spectra)(samples[i * nsamples:(i + 1) * nsamples]) for i in range(nbatches))
+#
+# P_spectra = np.zeros(shape=[nf])
+# B_spectra = np.zeros(shape=[nf, nf])
+# T_spectra = np.zeros(shape=[nf, nf, nf])
+#
+# for i in range(nbatches):
+#     P_spectra = P_spectra + spectra_list[i][0] / nbatches
+#     B_spectra = B_spectra + spectra_list[i][1] / nbatches
+#     T_spectra = T_spectra + spectra_list[i][2] / nbatches
 
-print('Order 2 comparision Samples:', moment(samples.flatten(), moment=2), ' Estimation:',
-      2 * np.sum(np.real(P_spectra)) * df ** 1,  ' Actual:', 2 * np.sum(P) * df ** 1)
-print('Order 3 comparision Samples:', moment(samples.flatten(), moment=3), ' Estimation:',
-      6 * np.sum(np.real(B_spectra)) * df ** 2, ' Actual:', 6 * np.sum(B_Real) * df ** 2)
-print('Trying to understand:')
-print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
-      3*(2 * np.sum(np.real(P_spectra)) * df ** 1)**2 + 24 * np.sum(np.real(T_spectra)) * df ** 3)
+# print('Order 2 comparision Samples:', moment(samples.flatten(), moment=2), ' Estimation:',
+#       2 * np.sum(np.real(P_spectra)) * df ** 1,  ' Actual:', 2 * np.sum(P) * df ** 1)
+# print('Order 3 comparision Samples:', moment(samples.flatten(), moment=3), ' Estimation:',
+#       6 * np.sum(np.real(B_spectra)) * df ** 2, ' Actual:', 6 * np.sum(B_Real) * df ** 2)
+# print('Trying to understand:')
+# print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
+#       3*(2 * np.sum(np.real(P_spectra)) * df ** 1)**2 + 24 * np.sum(np.real(T_spectra)) * df ** 3)
 
 # print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
 #       64 * np.sum(np.real(T_spectra)) * df ** 3)

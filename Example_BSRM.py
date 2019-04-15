@@ -9,11 +9,11 @@ plt.style.use('seaborn')
 
 # Input parameters
 T = 20  # Time(1 / T = dw)
-nt = 256  # Num.of Discretized Time
+nt = 1024  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
-nf = 128  # Num of Discretized Freq.
+nf = 512  # Num of Discretized Freq.
 nsamples = 100  # Num.of samples
-nbatches = 4
+nbatches = 400
 
 # # Generation of Input Data(Stationary)
 dt = T / nt
@@ -23,6 +23,7 @@ f = np.linspace(0, F - df, nf)
 
 # Target PSDF(stationary)
 P = 20 * 1 / np.sqrt(2 * np.pi) * np.exp(-1 / 2 * f ** 2)
+P[0] = 0.1
 
 t_u = 2 * np.pi / (2 * 2 * np.pi * F)
 if dt * 0.99 > t_u:
@@ -49,10 +50,21 @@ B_Ampl = np.absolute(B_Complex)
 
 
 def simulate():
-    obj = BSRM(nsamples, P, B_Complex, dt, df, nt, nf)
-    # obj = SRM(nsamples, P, df, nt, nf)
+    # obj = BSRM(nsamples, P, B_Complex, dt, df, nt, nf)
+    obj = SRM(nsamples, P, df, nt, nf)
     samples = obj.samples
     return samples
+
+
+samples_list = Parallel(n_jobs=nbatches)(delayed(simulate)() for _ in range(nbatches))
+samples = np.concatenate(samples_list, axis=0)
+
+
+print(moment(samples.flatten(), moment=0))
+print(moment(samples.flatten(), moment=1))
+print(moment(samples.flatten(), moment=2))
+print(moment(samples.flatten(), moment=3))
+print(moment(samples.flatten(), moment=4))
 
 
 def estimate_spectra(samples):
@@ -85,9 +97,6 @@ def estimate_spectra(samples):
     # m_Q = s_Q * (T ** 4) / nt ** 5 / nsamples
     return m_P, m_B, m_T
 
-
-samples_list = Parallel(n_jobs=nbatches)(delayed(simulate)() for _ in range(nbatches))
-samples = np.concatenate(samples_list, axis=0)
 
 spectra_list = Parallel(n_jobs=nbatches)(
     delayed(estimate_spectra)(samples[i * nsamples:(i + 1) * nsamples]) for i in range(nbatches))
@@ -163,7 +172,6 @@ import numpy as np
 # B_spectra = np.load('B_spectra.npy')
 # T_spectra = np.load('T_spectra.npy')
 
-nsim = 79
 # samples = np.load('samples.npy')
 P_spectra = np.load('P_spectra.npy')
 B_spectra = np.load('B_spectra.npy')

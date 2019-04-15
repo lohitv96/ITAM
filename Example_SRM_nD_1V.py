@@ -2,7 +2,7 @@ from SRM import *
 
 # Input Data
 # Time
-dim = 4
+dim = 2
 
 T = 10
 nt = 200
@@ -10,7 +10,7 @@ dt = T/nt
 t = np.linspace(0, T-dt, nt)
 
 # Frequency
-W = np.array([1.0, 1.5, 2.0, 2.5])
+W = np.array([1.0, 1.0])
 nw = 100
 dw = W / nw
 x_list = [np.linspace(0, W[i] - dw[i], nw) for i in range(dim)]
