@@ -160,6 +160,7 @@ for i in range(nw):
             Bc2[wi, wj] = 0
     SP[wk] = S[wk] - sum_Bc2[wk]
 print(np.min(SP))
+
 ########################################################################################################################
 # Simulation Part
 # Biphase_e = np.exp(Biphase * 1.0j)  # Only when the Imaginary part of the cross Bispectrum exists

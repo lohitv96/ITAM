@@ -3,8 +3,6 @@ from tools import *
 
 class SRM:
     def __init__(self, n_sim, S, dw, nt, nw, case='uni'):
-        # TODO: Error check for all the variables
-        # TODO: Division by 2 to deal with zero frequency for all cases
         self.S = S
         self.dw = dw
         self.nt = nt
