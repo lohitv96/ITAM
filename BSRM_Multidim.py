@@ -133,10 +133,10 @@ def simulate():
     B_temp[np.isnan(B_temp)] = 0
     samples = np.fft.fftn(B_temp, [nt, nt])
     samples = np.real(samples)
-    # samples = samples.reshape([nt, nt])
+    # samples_SRM = samples_SRM.reshape([nt, nt])
     return samples
 
-# Plotting of individual samples
+# Plotting of individual samples_SRM
 # import matplotlib.pyplot as plt
 # from pylab import *
 # from mpl_toolkits.mplot3d import Axes3D
@@ -147,11 +147,11 @@ def simulate():
 #
 # fig1 = plt.figure()
 # plt.title('2d Random Field')
-# pcm = pcolor(T[0], T[1], samples, cmap='RdBu_r', vmin=-30, vmax=30)
+# pcm = pcolor(T[0], T[1], samples_SRM, cmap='RdBu_r', vmin=-30, vmax=30)
 # plt.colorbar(pcm, extend='both', orientation='vertical')
 # plt.xlabel('$X_{1}$')
 # plt.ylabel('$X_{2}$')
-# plt.savefig('BSRM samples')
+# plt.savefig('BSRM samples_SRM')
 # plt.show()
 #
 # fig2 = plt.figure()
@@ -160,18 +160,18 @@ def simulate():
 # plt.colorbar(pcm, extend='both', orientation='vertical')
 # plt.xlabel('$X_{1}$')
 # plt.ylabel('$X_{2}$')
-# plt.savefig('SRM samples')
+# plt.savefig('SRM samples_SRM')
 # plt.show()
 
 
 samples_list = Parallel(n_jobs=4)(delayed(simulate)() for _ in range(num_batches))
 samples1 = np.concatenate(samples_list, axis=0)
 
-# saving the samples data
-np.save('data/samples.npy', samples1)
+# saving the samples_SRM data
+np.save('data/samples_SRM.npy', samples1)
 #
-# # loading the samples data
-# samples1 = np.fromfile('data/samples.csv').reshape([num_batches * nsamples, nt, nt])
+# # loading the samples_SRM data
+# samples_BSRM = np.fromfile('data/samples_SRM.csv').reshape([num_batches * nsamples, nt, nt])
 
 print('The estimate of mean is', np.mean(samples1), 'whereas the expected mean is 0.000')
 print('The estimate of variance is', np.var(samples1.flatten()), 'whereas the expected variance is',
@@ -183,7 +183,7 @@ print('The estimate of skewness is', skew(samples1.flatten(), axis=0), 'whereas 
 
 # B_list = []
 # for i in range(12):
-#     B1 = np.fft.fftn(samples1[i * nsamples:(i + 1) * nsamples], axes=[1, 2])
+#     B1 = np.fft.fftn(samples_BSRM[i * nsamples:(i + 1) * nsamples], axes=[1, 2])
 #     B2 = B1[:, :nf, :nf]
 #     B2[:, 0, 0] = B2[:, 0, 0]/np.sqrt(2)
 #     B_list.append(B2)
@@ -194,7 +194,7 @@ print('The estimate of skewness is', skew(samples1.flatten(), axis=0), 'whereas 
 
 # Estimating the bispectrum for the two-dimensional case
 # Computationally Intractable
-# Xw = np.fft.fft(samples1[:1024])[:, :nf, :nf]
+# Xw = np.fft.fft(samples_BSRM[:1024])[:, :nf, :nf]
 #
 # s_B = np.zeros(shape=[nf, nf, nf, nf])
 # s_B = s_B + s_B * 1.0j

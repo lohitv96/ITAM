@@ -2,6 +2,7 @@ import numpy as np
 import copy
 import math
 from scipy.stats import skew, kurtosis, moment
+from matplotlib import pyplot as plt
 
 
 def estimate_cross_power_spectrum(samples):
@@ -168,7 +169,7 @@ print(np.min(SP))
 # Making sure that the Pure part of the 2nd order power spectrum is symmetric, asymmetry might arise from computations
 # involved
 SP = (SP + np.einsum('wij->wji', SP)) / 2
-# Simulating the pure component of the samples
+# Simulating the pure component of the samples_SRM
 Coeff = 2*np.sqrt(dw)
 U, s, V = np.linalg.svd(SP)
 R = np.einsum('wij,wj->wij', U, np.sqrt(s))
@@ -191,13 +192,21 @@ print(6*np.sum(B[:, :, 0, 0, 0])*dw**2/(2*np.sum(S[:, 0, 0])*dw)**(3/2))
 ########################################################################################################################
 # Simulation Checks
 # Checking if the 2nd-order spectrum can be recovered
-# temp = estimate_cross_power_spectrum(samplesp)
+# temp = estimate_cross_power_spectrum(samples_SRM)
 
 # Checking if the 2nd-order spectrum can be recovered
-# temp1 = estimate_cross_bispectrum(samplesp)
+# temp1 = estimate_cross_bispectrum(samples_SRM)
 
 ########################################################################################################################
 # Statistics Checks
 # Checking if the 2nd-order statistcs are satisfied
 
 # Checking if the 3rd-order statistcs are satisfied
+
+fig1 = plt.figure()
+plt.plot(t, samples[0, :, 0], 'b')
+plt.savefig('BSRM_mv_var1.eps')
+
+fig2 = plt.figure()
+plt.plot(t, samples[0, :, 1], 'r')
+plt.savefig('BSRM_mv_var2.eps')

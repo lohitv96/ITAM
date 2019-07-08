@@ -27,7 +27,7 @@ samples = SRM_object.samples
 # # Plotting a sample realisation
 # fig = plt.figure()
 # ax = fig.gca(projection='3d')
-# ax.plot_surface(Tx, Ty, samples[0])
+# ax.plot_surface(Tx, Ty, samples_SRM[0])
 # plt.title('Realisation')
 # ax.set_xlabel('$t_1$')
 # ax.set_ylabel('$t_2$')

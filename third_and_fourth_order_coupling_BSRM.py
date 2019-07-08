@@ -12,7 +12,7 @@ T = 20  # Time(1 / T = dw)
 nt = 256  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
 nf = 128  # Num of Discretized Freq.
-nsamples = 50  # Num.of samples
+nsamples = 50  # Num.of samples_SRM
 nbatches = 4
 ncores = 4
 
@@ -55,7 +55,7 @@ def simulate():
     samples_BSRM = obj.samples
     return samples_BSRM
     # obj = SRM(nsamples, P, df, nt, nf)
-    # samples_SRM = obj.samples
+    # samples_SRM = obj.samples_SRM
     # return samples_SRM
 
 
@@ -91,7 +91,7 @@ np.save('third_order_coupling_data.npy', third_order_data)
 np.save('fourth_order_coupling_data.npy', fourth_order_data)
 
 # spectra_list = Parallel(n_jobs=ncores)(
-#     delayed(estimate_spectra)(samples[i * nsamples:(i + 1) * nsamples]) for i in range(nbatches))
+#     delayed(estimate_spectra)(samples_SRM[i * nsamples:(i + 1) * nsamples]) for i in range(nbatches))
 #
 # P_spectra = np.zeros(shape=[nf])
 # B_spectra = np.zeros(shape=[nf, nf])
@@ -102,33 +102,33 @@ np.save('fourth_order_coupling_data.npy', fourth_order_data)
 #     B_spectra = B_spectra + spectra_list[i][1] / nbatches
 #     T_spectra = T_spectra + spectra_list[i][2] / nbatches
 
-# print('Order 2 comparision Samples:', moment(samples.flatten(), moment=2), ' Estimation:',
+# print('Order 2 comparision Samples:', moment(samples_SRM.flatten(), moment=2), ' Estimation:',
 #       2 * np.sum(np.real(P_spectra)) * df ** 1,  ' Actual:', 2 * np.sum(P) * df ** 1)
-# print('Order 3 comparision Samples:', moment(samples.flatten(), moment=3), ' Estimation:',
+# print('Order 3 comparision Samples:', moment(samples_SRM.flatten(), moment=3), ' Estimation:',
 #       6 * np.sum(np.real(B_spectra)) * df ** 2, ' Actual:', 6 * np.sum(B_Real) * df ** 2)
 # print('Trying to understand:')
-# print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
+# print('Order 4 comparision Samples:', moment(samples_SRM.flatten(), moment=4), ' Estimation:',
 #       3*(2 * np.sum(np.real(P_spectra)) * df ** 1)**2 + 24 * np.sum(np.real(T_spectra)) * df ** 3)
 
-# print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
+# print('Order 4 comparision Samples:', moment(samples_SRM.flatten(), moment=4), ' Estimation:',
 #       64 * np.sum(np.real(T_spectra)) * df ** 3)
 
 
 # MARCC data post processing
 # import numpy as np
 
-# samples = np.load('samples.npy')
+# samples_SRM = np.load('samples_SRM.npy')
 # P_spectra = np.load('P_spectra.npy')
 # B_spectra = np.load('B_spectra.npy')
 # T_spectra = np.load('T_spectra.npy')
 
 # nsim = 79
-# # samples = np.load('samples.npy')
+# # samples_SRM = np.load('samples_SRM.npy')
 # P_spectra = np.load('P_spectra.npy')
 # B_spectra = np.load('B_spectra.npy')
 # T_spectra = np.load('T_spectra.npy')
 # for i in range(1, nsim + 1):
-#     # samples = np.concatenate((samples, np.load('data' + str(i) + '/samples.npy')), axis=0)
+#     # samples_SRM = np.concatenate((samples_SRM, np.load('data' + str(i) + '/samples_SRM.npy')), axis=0)
 #     P_spectra = P_spectra + np.load('data' + str(i) + '/P_spectra.npy')
 #     B_spectra = B_spectra + np.load('data' + str(i) + '/B_spectra.npy')
 #     T_spectra = T_spectra + np.load('data' + str(i) + '/T_spectra.npy')
@@ -139,11 +139,11 @@ np.save('fourth_order_coupling_data.npy', fourth_order_data)
 # print(np.real(T_spectra[26])[1, 1], np.real(T_spectra[26])[2, 1])
 # print(np.real(B_spectra)[1, 1], np.real(B_spectra)[2, 1])
 
-# print('Order 2 comparision Samples:', moment(samples.flatten(), moment=2), ' Estimation:',
+# print('Order 2 comparision Samples:', moment(samples_SRM.flatten(), moment=2), ' Estimation:',
 #       2 * np.sum(np.real(P_spectra)) * df ** 1)
-# print('Order 3 comparision Samples:', moment(samples.flatten(), moment=3), ' Estimation:',
+# print('Order 3 comparision Samples:', moment(samples_SRM.flatten(), moment=3), ' Estimation:',
 #       6 * np.sum(np.real(B_spectra)) * df ** 2)
-# print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
+# print('Order 4 comparision Samples:', moment(samples_SRM.flatten(), moment=4), ' Estimation:',
 #       24 * np.sum(np.real(T_spectra)) * df ** 3)
 #
 # T_spectra[0, :, :] = 0

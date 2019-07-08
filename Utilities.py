@@ -37,14 +37,14 @@ def transform_ng_to_g(corr_norm, dist, dist_params, samples_ng, jacobian=True):
             :param dist_params: marginal distribution parameters
             :type dist_params: list
 
-            :param samples_ng: non-Gaussian samples
+            :param samples_ng: non-Gaussian samples_SRM
             :type samples_ng: ndarray
 
             :param jacobian: The Jacobian of the transformation
             :type jacobian: ndarray
 
         Output:
-            :return: samples_g: Gaussian samples
+            :return: samples_g: Gaussian samples_SRM
             :rtype: samples_g: ndarray
 
             :return: jacobian: The jacobian
@@ -93,14 +93,14 @@ def transform_g_to_ng(corr_norm, dist, dist_params, samples_g, jacobian=True):
             :param dist_params: marginal distribution parameters
             :type dist_params: list
 
-            :param samples_g: Gaussian samples
+            :param samples_g: Gaussian samples_SRM
             :type samples_g: ndarray
 
             :param jacobian: The Jacobian of the transformation
             :type jacobian: ndarray
 
         Output:
-            :return: samples_ng: Gaussian samples
+            :return: samples_ng: Gaussian samples_SRM
             :rtype: samples_ng: ndarray
 
             :return: jacobian: The jacobian
@@ -138,18 +138,18 @@ def run_corr(samples, corr):
         Description:
 
             A function which performs the Cholesky decomposition of the correlation matrix and correlates standard
-            normal samples.
+            normal samples_SRM.
 
         Input:
             :param corr: Correlation matrix
             :type corr: ndarray
 
-            :param samples: Standard normal samples.
+            :param samples: Standard normal samples_SRM.
             :type samples: ndarray
 
 
         Output:
-            :return: samples_corr: Correlated standard normal samples
+            :return: samples_corr: Correlated standard normal samples_SRM
             :rtype: samples_corr: ndarray
 
     """
@@ -167,18 +167,18 @@ def run_decorr(samples, corr):
         Description:
 
             A function which performs the Cholesky decomposition of the correlation matrix and de-correlates standard
-            normal samples.
+            normal samples_SRM.
 
         Input:
             :param corr: Correlation matrix
             :type corr: ndarray
 
-            :param samples: standard normal samples.
+            :param samples: standard normal samples_SRM.
             :type samples: ndarray
 
 
         Output:
-            :return: samples_uncorr: Uncorrelated standard normal samples
+            :return: samples_uncorr: Uncorrelated standard normal samples_SRM
             :rtype: samples_uncorr: ndarray
 
     """
@@ -526,7 +526,7 @@ def is_pd(b):
 def estimate_psd(samples, nt, t):
 
     """
-        Description: A function to estimate the Power Spectrum of a stochastic process given an ensemble of samples
+        Description: A function to estimate the Power Spectrum of a stochastic process given an ensemble of samples_SRM
 
         Input:
             :param samples: Samples of the stochastic process

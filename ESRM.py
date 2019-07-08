@@ -64,5 +64,5 @@ class ESRM:
                 samples += np.real(sample)
             samples_list.append(samples)
         samples_list = np.array(samples_list)
-        # samples = translate_process(samples, self.Dist, self.mu, self.sig, self.parameter1, self.parameter2)
+        # samples_SRM = translate_process(samples_SRM, self.Dist, self.mu, self.sig, self.parameter1, self.parameter2)
         return np.einsum('ij...->ji...', samples_list)

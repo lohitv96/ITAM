@@ -12,7 +12,7 @@ T = 20  # Time(1 / T = dw)
 nt = 1024  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
 nf = 512  # Num of Discretized Freq.
-nsamples = 100  # Num.of samples
+nsamples = 100  # Num.of samples_SRM
 nbatches = 400
 
 # # Generation of Input Data(Stationary)
@@ -125,11 +125,11 @@ for i in range(nbatches):
 # m_T_Real = np.real(T_spectra)
 # m_T_Imag = np.imag(T_spectra)
 #
-# print('Order 2 comparision Samples:', moment(samples.flatten(), moment=2), ' Estimation:',
+# print('Order 2 comparision Samples:', moment(samples_SRM.flatten(), moment=2), ' Estimation:',
 #       2 * np.sum(m_P_Real) * df ** 1)
-# print('Order 3 comparision Samples:', moment(samples.flatten(), moment=3), ' Estimation:',
+# print('Order 3 comparision Samples:', moment(samples_SRM.flatten(), moment=3), ' Estimation:',
 #       6 * np.sum(m_B_Real) * df ** 2)
-# print('Order 4 comparision Samples:', moment(samples.flatten(), moment=4), ' Estimation:',
+# print('Order 4 comparision Samples:', moment(samples_SRM.flatten(), moment=4), ' Estimation:',
 #       24 * np.sum(m_T_Real) * df ** 3)
 #
 # # Plotting the Estimated Real Bispectrum function
@@ -151,33 +151,33 @@ for i in range(nbatches):
 # plt.show()
 
 # # Simulation statistics checks
-# print('The estimate of mean is', np.mean(samples), 'whereas the expected mean is 0.000')
-# print('The estimate of variance is', np.var(samples.flatten(), axis=0), 'whereas the expected variance is',
+# print('The estimate of mean is', np.mean(samples_SRM), 'whereas the expected mean is 0.000')
+# print('The estimate of variance is', np.var(samples_SRM.flatten(), axis=0), 'whereas the expected variance is',
 #       np.sum(P) * 2 * df)
-# print('The estimate of third moment is', moment(samples.flatten(), moment=3, axis=0), 'whereas the expected value is',
+# print('The estimate of third moment is', moment(samples_SRM.flatten(), moment=3, axis=0), 'whereas the expected value is',
 #       np.sum(b) * 6 * df ** 2)
-# print('The estimate of skewness is', skew(samples.flatten(), axis=0), 'whereas the expected skewness is',
+# print('The estimate of skewness is', skew(samples_SRM.flatten(), axis=0), 'whereas the expected skewness is',
 #       (np.sum(b) * 6 * df ** 2) / (np.sum(P) * 2 * df) ** (3 / 2))
-# print('The estimate of skewness is', skew(samples.flatten()))
-# print('The estimate of kurtosis is', kurtosis(samples.flatten()))
+# print('The estimate of skewness is', skew(samples_SRM.flatten()))
+# print('The estimate of kurtosis is', kurtosis(samples_SRM.flatten()))
 #
 # plt.figure()
-# plt.hist(samples.flatten(), bins=1000, normed=True)
+# plt.hist(samples_SRM.flatten(), bins=1000, normed=True)
 # plt.show()
 
 import numpy as np
 
-# samples = np.load('samples.npy')
+# samples_SRM = np.load('samples_SRM.npy')
 # P_spectra = np.load('P_spectra.npy')
 # B_spectra = np.load('B_spectra.npy')
 # T_spectra = np.load('T_spectra.npy')
 
-# samples = np.load('samples.npy')
+# samples_SRM = np.load('samples_SRM.npy')
 P_spectra = np.load('P_spectra.npy')
 B_spectra = np.load('B_spectra.npy')
 T_spectra = np.load('T_spectra.npy')
 for i in range(1, nsim + 1):
-    # samples = np.concatenate((samples, np.load('data' + str(i) + '/samples.npy')), axis=0)
+    # samples_SRM = np.concatenate((samples_SRM, np.load('data' + str(i) + '/samples_SRM.npy')), axis=0)
     P_spectra = P_spectra + np.load('data' + str(i) + '/P_spectra.npy')
     B_spectra = B_spectra + np.load('data' + str(i) + '/B_spectra.npy')
     T_spectra = T_spectra + np.load('data' + str(i) + '/T_spectra.npy')

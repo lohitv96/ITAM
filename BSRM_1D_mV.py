@@ -172,7 +172,7 @@ print(np.min(SP))
 # Making sure that the Pure part of the 2nd order power spectrum is symmetric, asymmetry might arise from computations
 # involved
 SP = (SP + np.einsum('wij->wji', SP)) / 2
-# Simulating the pure component of the samples
+# Simulating the pure component of the samples_SRM
 Coeff = 2*np.sqrt(dw)
 U, s, V = np.linalg.svd(SP)
 R = np.einsum('wij,wj->wij', U, np.sqrt(s))

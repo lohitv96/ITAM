@@ -105,7 +105,7 @@ T = 20  # Time(1 / T = dw)
 nt = 256  # Num.of Discretized Time
 F = 1 / T * nt / 2  # Frequency.(Hz)
 nf = 128  # Num of Discretized Freq.
-nsamples = 100  # Num.of samples
+nsamples = 100  # Num.of samples_SRM
 nbatches = 1
 
 # # Generation of Input Data(Stationary)
@@ -135,7 +135,7 @@ B_Complex = B_Real + 1j * B_Imag
 B_Ampl = np.absolute(B_Complex)
 
 # samples_list = Parallel(n_jobs=nbatches)(delayed(simulate)() for _ in range(nbatches))
-# samples1 = np.concatenate(samples_list, axis=0)
+# samples_BSRM = np.concatenate(samples_list, axis=0)
 
 obj = BSRM(nsamples, P, B_Complex, dt, df, nt, nf)
 samples1 = obj.samples
@@ -162,13 +162,13 @@ np.save('Tspectra.npy', Tspectra)
 # # samples2 = np.concatenate(samples_list, axis=0)
 #
 # obj = BSRM(nsamples, P, B_Complex, dt, df, nt, nf)
-# samples2 = obj.samples
+# samples2 = obj.samples_SRM
 #
-# samples1 = np.reshape(samples1, [nsamples*nbatches, 1, nt])
+# samples_BSRM = np.reshape(samples_BSRM, [nsamples*nbatches, 1, nt])
 # samples2 = np.reshape(samples2, [nsamples*nbatches, 1, nt])
 #
-# samples = np.concatenate((samples1, samples2), axis=1)
+# samples_SRM = np.concatenate((samples_BSRM, samples2), axis=1)
 #
-# P = np.real(estimate_cross_power_spectrum(samples))*T
-# B = np.real(estimate_cross_bispectrum(samples))*T
-# B = np.real(estimate_cross_bispectrum(samples))*T
+# P = np.real(estimate_cross_power_spectrum(samples_SRM))*T
+# B = np.real(estimate_cross_bispectrum(samples_SRM))*T
+# B = np.real(estimate_cross_bispectrum(samples_SRM))*T
