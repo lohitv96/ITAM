@@ -3,52 +3,16 @@ import copy
 import math
 from scipy.stats import skew, kurtosis, moment
 
-
-def estimate_cross_power_spectrum(samples):
-    nsamples, m, nt = samples.shape
-    nw = int(nt / 2)
-    Xw = np.fft.ifft(samples, axis=2)
-    Xw = Xw[:, :, :nw]
-    # Initializing the array before hand
-    s_P = np.zeros([nsamples, m, m, nw])
-    s_P = s_P + 1.0j * s_P
-    for i1 in range(nw):
-        s_P[..., i1] = s_P[..., i1] + np.einsum('ij, ik-> ijk', Xw[..., i1], np.conj(Xw[..., i1]))
-    m_P = np.mean(s_P, axis=0)
-    return m_P
-
-
-def estimate_cross_bispectrum(samples):
-    nsamples, m, nt = samples.shape
-    nw = int(nt / 2)
-    Xw = np.fft.ifft(samples, axis=2)
-    Xw = Xw[:, :, :nw]
-    # Initializing the array before hand
-    s_B = np.zeros([nsamples, m, m, m, nw, nw])
-    s_B = s_B + 1.0j * s_B
-    for i1 in range(nw):
-        for i2 in range(nw - i1):
-            s_B[..., i1, i2] = s_B[..., i1, i2] + np.einsum('ij, ik, il-> ijkl', Xw[..., i1], Xw[..., i2],
-                                                            np.conj(Xw[..., i1 + i2]))
-    m_B = np.mean(s_B, axis=0)
-    return m_B
-
-
 ########################################################################################################################
 # Input Part
 
 nsamples = 10000
-n = 2  # Number of dimensions
+n = 1  # Number of dimensions
 m = 2  # Number of variables
 
-W = np.array([2.0, 2.0])  # Cutoff Frequency
+W = 2.0  # Cutoff Frequency
 nw = 400  # Number of frequency steps
 dw = W / nw  # Length of frequency step
-
-x_list = np.array([np.linspace(dw[i], W[i], nw) for i in range(n)])
-xy_list = np.array(np.meshgrid(*x_list, indexing='ij'))
-# S = 125 / 4 * np.linalg.norm(xy_list, axis=0) ** 2 * np.exp(-5 * np.linalg.norm(xy_list, axis=0))
-
 w = np.linspace(dw, W, nw)  # frequency vector
 wx, wy = np.meshgrid(w, w)  # Frequency mesh
 
@@ -57,12 +21,18 @@ T = 1 / W * nt / 2  # Total Simulation time
 dt = T / nt  # Duration of time step
 t = np.linspace(dt, T, nt)  # Vector of time
 
+t_u = 2 * np.pi / (2 * W)
+if dt * 0.99 > t_u:
+    print('\n')
+    print('ERROR:: Condition of delta_t <= 2*np.pi/(2*2*np.pi*F_u) = 1/(2*W_u)')
+    print('\n')
+
 # Diagonal elements of the Multi-variate Power Spectrum
-S_11 = 38.3 / (1 + 6.19 * np.sum(xy_list, axis=0)) ** (5 / 3)
-S_22 = 43.4 / (1 + 6.98 * np.sum(xy_list, axis=0)) ** (5 / 3)
+S_11 = 38.3 / (1 + 6.19 * w) ** (5 / 3)
+S_22 = 43.4 / (1 + 6.98 * w) ** (5 / 3)
 
 # Gamma values of the Multi-variate Power Spectrum
-g_s_12 = np.exp(-2 * np.sum(xy_list))
+g_s_12 = np.exp(-2 * w)
 
 # Diagonal elements of the Multi-variate Bispectrum
 B_111 = 50 / (1 + 6.19 * (wx + wy)) ** (5 / 3)
@@ -107,7 +77,7 @@ B_list = np.array([B_111, B_222])
 g_b_list = np.array([g_b_112, g_b_122])
 
 B_cube_root = np.power(B_list, 1 / 3)
-B_ijk = np.einsum('i...,j..., k...->ijk...', B_cube_root, B_cube_root, B_cube_root)\
+B_ijk = np.einsum('i...,j..., k...->ijk...', B_cube_root, B_cube_root, B_cube_root)
 
 # Assembly of G_ijk
 G_ijk = np.zeros_like(B_ijk)
@@ -142,9 +112,10 @@ Phi_e = np.exp(phi * 1.0j)
 
 # Make this for loop computationally efficient
 Fi = np.zeros(shape=[nsamples, nw, m])
-Fi = Fi + Fi *1.0j
+Fi = Fi + Fi * 1.0j
 for i in range(nw):
     wk = i
+    print(wk)
     for j in range(int(math.ceil((wk + 1) / 2))):
         wj = j
         wi = wk - wj
@@ -156,8 +127,10 @@ for i in range(nw):
             Rj = np.einsum('ij, jk->ik', Uj, np.diag(np.sqrt(sj)))
             Rii = np.linalg.inv(Ri)
             Rji = np.linalg.inv(Rj)
-            Bc2[wi, wj] = np.einsum('cba, gfe, pa, re, qb, sf, pr, qs->cg', B[wi, wj], B[wi, wj], Rii, Rii, Rji, Rji,
-                                    np.eye(m), np.eye(m))*dw
+            # Bc2[wi, wj] = np.einsum('cba, gfe, pa, re, qb, sf, pr, qs->cg', B[wi, wj], B[wi, wj], Rii, Rii, Rji, Rji,
+            #                         np.eye(m), np.eye(m)) * dw
+            # Bc2[wi, wj] = np.einsum('cba, gfe, pa, pe, qb, qf->cg', B[wi, wj], B[wi, wj], Rii, Rii, Rji, Rji) * dw
+            Bc2[wi, wj] = np.einsum('cba, gfe, pa, pe, qb, qf->cg', B[wi, wj], B[wi, wj], Rii, Rii, Rji, Rji) * dw
             sum_Bc2[wk] = sum_Bc2[wk] + Bc2[wi, wj]
             Fi[:, wk, :] = Fi[:, wk, :] + np.einsum('np, nq, gfe, pe, qf -> ng', Phi_e[:, wi], Phi_e[:, wj], B[wi, wj],
                                                     Rii, Rji) * 2 * dw
@@ -165,18 +138,26 @@ for i in range(nw):
             Bc2[wi, wj] = 0
     SP[wk] = S[wk] - sum_Bc2[wk]
 print(np.min(SP))
+
 ########################################################################################################################
 # Simulation Part
 # Biphase_e = np.exp(Biphase * 1.0j)  # Only when the Imaginary part of the cross Bispectrum exists
+
+# Original Spectral Representation Theorem Method
+Coeff = 2 * np.sqrt(dw)
+U, s, V = np.linalg.svd(S)
+R = np.einsum('wij,wj->wij', U, np.sqrt(s))
+F = Coeff * np.einsum('wij,nwj -> nwi', R, Phi_e)
+samples_SRM = np.real(np.fft.fft(F, nt, axis=1))
 
 # Making sure that the Pure part of the 2nd order power spectrum is symmetric, asymmetry might arise from computations
 # involved
 SP = (SP + np.einsum('wij->wji', SP)) / 2
 # Simulating the pure component of the samples_SRM
-Coeff = 2*np.sqrt(dw)
+Coeff = 2 * np.sqrt(dw)
 U, s, V = np.linalg.svd(SP)
 R = np.einsum('wij,wj->wij', U, np.sqrt(s))
-Fp = Coeff*np.einsum('wij,nwj -> nwi', R, Phi_e)
+Fp = Coeff * np.einsum('wij,nwj -> nwi', R, Phi_e)
 
 Fp[np.isnan(Fp)] = 0
 samplesp = np.real(np.fft.fft(Fp, nt, axis=1))
@@ -184,31 +165,25 @@ samplesp = np.real(np.fft.fft(Fp, nt, axis=1))
 Fi[np.isnan(Fi)] = 0
 samplesi = np.real(np.fft.fft(Fi, nt, axis=1))
 
-samples = samplesp + samplesi
+samples_BSRM = samplesp + samplesi
 
-print(np.var(samples[:, :, 0]))
-print(np.sum(2*S[:, 0, 0]*dw))
+B1 = np.zeros_like(B)
+for i in range(nw):
+    wk = i
+    for j in range(int(math.ceil((wk + 1) / 2))):
+        wj = j
+        wi = wk - wj
+        B1[wi, wj] = B[wi, wj]
 
-print(skew(samples[:, :, 0].flatten()))
-print(6*np.sum(B[:, :, 0, 0, 0])*dw**2/(2*np.sum(S[:, 0, 0])*dw)**(3/2))
+for i in range(2):
+    for j in range(2):
+        for k in range(2):
+            B1[:, :, i, j, k] = B1[:, :, i, j, k] + np.transpose(B1[:, :, i, j, k])
+            B1[:, :, i, j, k] = B1[:, :, i, j, k] - np.diag(np.diag(B1[:, :, i, j, k])) / 2
 
-########################################################################################################################
-# Simulation Checks
-# Checking if the 2nd-order spectrum can be recovered
-# temp = estimate_cross_power_spectrum(samplesp)
-
-# Checking if the 2nd-order spectrum can be recovered
-# temp1 = estimate_cross_bispectrum(samplesp)
-
-########################################################################################################################
-# Statistics Checks
-# Checking if the 2nd-order statistcs are satisfied
-
-# Checking if the 3rd-order statistcs are satisfied
-
-n = 10
-sum = 0
-for i in range(1, n+1):
-    for j in range(i, n+1):
-        sum += j
-print(sum)
+np.save('data_multi_variate/samples_SRM.npy', samples_SRM)
+np.save('data_multi_variate/samples_BSRM.npy', samples_BSRM)
+np.save('data_multi_variate/S.npy', S)
+np.save('data_multi_variate/SP.npy', SP)
+np.save('data_multi_variate/B.npy', B)
+np.save('data_multi_variate/B1.npy', B1)
