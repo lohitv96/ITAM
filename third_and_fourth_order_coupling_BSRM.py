@@ -54,6 +54,98 @@ def estimate_fifth_order_interactions(samples):
     return temp / df ** 4
 
 
+def estimate_power_spectrum(samples):
+    nsamples, nt = samples.shape
+    nw = int(nt/2)
+    Xw = np.fft.ifft(samples, axis=1)
+    Xw = Xw[:, :nw]
+    # Initializing the array before hand
+    s_P = np.zeros([nsamples, nw])
+    s_P = s_P + 1.0j * s_P
+    for i1 in range(nw):
+        s_P[..., i1] = s_P[..., i1] + np.einsum('i, i-> i', Xw[..., i1], np.conj(Xw[..., i1]))
+    m_P = np.mean(s_P, axis=0)
+    return m_P
+
+
+def estimate_bispectrum(samples):
+    nsamples, nt = samples.shape
+    nw = int(nt/2)
+    Xw = np.fft.ifft(samples, axis=1)
+    Xw = Xw[:, :nw]
+    # Initializing the array before hand
+    s_B = np.zeros([nsamples, nw, nw])
+    s_B = s_B + 1.0j * s_B
+    for i1 in range(nw):
+        for i2 in range(nw - i1):
+            s_B[..., i1, i2] = s_B[..., i1, i2] + np.einsum('i, i, i-> i', Xw[..., i1], Xw[..., i2],
+                                                            np.conj(Xw[..., i1 + i2]))
+    m_B = np.mean(s_B, axis=0)
+    return m_B
+
+
+def estimate_trispectrum(samples):
+    nsamples, nt = samples.shape
+    nw = int(nt/2)
+    Xw = np.fft.ifft(samples, axis=1)
+    Xw = Xw[:, :nw]
+    # Initializing the array before hand
+    s_T = np.zeros([nsamples, nw, nw, nw])
+    s_T = s_T + 1.0j * s_T
+    for i1 in range(nw):
+        for i2 in range(nw - i1):
+            for i3 in range(nw - i1 - i2):
+                s_T[..., i1, i2, i3] = s_T[..., i1, i2, i3] + np.einsum('i, i, i, i-> i', Xw[:, i1], Xw[:, i2], Xw[:, i3], np.conj(Xw[:, i1 + i2 + i3]))
+    m_T = np.mean(s_T, axis=0)
+    return m_T
+
+
+def estimate_cross_power_spectrum(samples):
+    nsamples, m, nt = samples.shape
+    nw = int(nt/2)
+    Xw = np.fft.ifft(samples, axis=2)
+    Xw = Xw[:, :, :nw]
+    # Initializing the array before hand
+    s_P = np.zeros([nsamples, m, m, nw])
+    s_P = s_P + 1.0j * s_P
+    for i1 in range(nw):
+        s_P[..., i1] = s_P[..., i1] + np.einsum('ij, ik-> ijk', Xw[..., i1], np.conj(Xw[..., i1]))
+    m_P = np.mean(s_P, axis=0)
+    return m_P
+
+
+def estimate_cross_bispectrum(samples):
+    nsamples, m, nt = samples.shape
+    nw = int(nt/2)
+    Xw = np.fft.ifft(samples, axis=2)
+    Xw = Xw[:, :, :nw]
+    # Initializing the array before hand
+    s_B = np.zeros([nsamples, m, m, m, nw, nw])
+    s_B = s_B + 1.0j * s_B
+    for i1 in range(nw):
+        for i2 in range(nw - i1):
+            s_B[..., i1, i2] = s_B[..., i1, i2] + np.einsum('ij, ik, il-> ijkl', Xw[..., i1], Xw[..., i2],
+                                                            np.conj(Xw[..., i1 + i2]))
+    m_B = np.mean(s_B, axis=0)
+    return m_B
+
+
+def estimate_cross_trispectrum(samples):
+    nsamples, m, nt = samples.shape
+    nw = int(nt/2)
+    Xw = np.fft.ifft(samples, axis=2)
+    Xw = Xw[:, :, :nw]
+    # Initializing the array before hand
+    s_T = np.zeros([nsamples, m, m, m, m, nw, nw, nw])
+    s_T = s_T + 1.0j * s_T
+    for i1 in range(nw):
+        for i2 in range(nw - i1):
+            for i3 in range(nw - i1 - i2):
+                s_T[..., i1, i2, i3] = s_T[..., i1, i2, i3] + np.einsum('ij, ij, il, im-> ijklm', Xw[:, i1], Xw[:, i2], Xw[:, i3], np.conj(Xw[:, i1 + i2 + i3]))
+    m_T = np.mean(s_T, axis=0)
+    return m_T
+
+
 ########################################################################################################################
 
 # Input parameters

@@ -267,20 +267,20 @@ np.save('data_non_stationary/R3_BSRM.npy', R3_BSRM)
 #
 #
 # samples_list = Parallel(n_jobs=4)(delayed(simulate)() for _ in range(num_batches))
-# samples1 = np.concatenate(samples_list, axis=0)
+# samples_SRM = np.concatenate(samples_list, axis=0)
 #
 # samples_SRM = np.zeros(shape=[num_batches * nsamples, nt])
 # samples_BSRM = np.zeros(shape=[num_batches * nsamples, nt])
 #
 # for i in range(num_batches):
-#     samples_SRM[i * nsamples:(i + 1) * nsamples, :] = samples1[2 * i]
-#     samples_BSRM[i * nsamples:(i + 1) * nsamples, :] = samples1[2 * i + 1]
+#     samples_SRM[i * nsamples:(i + 1) * nsamples, :] = samples_SRM[2 * i]
+#     samples_BSRM[i * nsamples:(i + 1) * nsamples, :] = samples_SRM[2 * i + 1]
 #
 # batch_size = nsamples
 #
 # def estimate_R2_and_R3(batch_num):
-#     samples1 = samples_SRM[batch_num*batch_size:(batch_num+1)*batch_size]
-#     samples2 = samples_BSRM[batch_num * batch_size:(batch_num + 1) * batch_size]
+#     samples_SRM = samples_SRM[batch_num*batch_size:(batch_num+1)*batch_size]
+#     samples_BSRM = samples_BSRM[batch_num * batch_size:(batch_num + 1) * batch_size]
 #     R2_SRM = np.zeros(shape=[nt, nt])
 #     R2_BSRM = np.zeros(shape=[nt, nt])
 #     R3_SRM = np.zeros(shape=[nt, nt, nt])
@@ -288,11 +288,11 @@ np.save('data_non_stationary/R3_BSRM.npy', R3_BSRM)
 #     for i in range(nt):
 #         print(i)
 #         for j in range(i, nt):
-#             R2_SRM[i, j] = np.mean(samples1[:, i] * samples1[:, j])
-#             R2_BSRM[i, j] = np.mean(samples2[:, i] * samples2[:, j])
+#             R2_SRM[i, j] = np.mean(samples_SRM[:, i] * samples_SRM[:, j])
+#             R2_BSRM[i, j] = np.mean(samples_BSRM[:, i] * samples_BSRM[:, j])
 #             # for k in range(j, nt):
-#             #     R3_SRM[i, j, k] = np.mean(samples1[:, i] * samples1[:, j] * samples1[:, k])
-#             #     R3_BSRM[i, j, k] = np.mean(samples2[:, i] * samples2[:, j] * samples2[:, k])
+#             #     R3_SRM[i, j, k] = np.mean(samples_SRM[:, i] * samples_SRM[:, j] * samples_SRM[:, k])
+#             #     R3_BSRM[i, j, k] = np.mean(samples_BSRM[:, i] * samples_BSRM[:, j] * samples_BSRM[:, k])
 #     return [R2_SRM, R2_BSRM, R3_SRM, R3_BSRM]
 #
 # R_list = Parallel(n_jobs=4)(delayed(estimate_R2_and_R3)(j) for j in range(num_batches))

@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import copy
 import math
 from scipy.stats import skew, kurtosis, moment
@@ -23,9 +24,7 @@ t = np.linspace(dt, T, nt)  # Vector of time
 
 t_u = 2 * np.pi / (2 * W)
 if dt * 0.99 > t_u:
-    print('\n')
-    print('ERROR:: Condition of delta_t <= 2*np.pi/(2*2*np.pi*F_u) = 1/(2*W_u)')
-    print('\n')
+    sys.exit('Simulation Failed: Check that the input parameters satisfy the aliasing criterion')
 
 # Diagonal elements of the Multi-variate Power Spectrum
 S_11 = 38.3 / (1 + 6.19 * w) ** (5 / 3)
@@ -137,7 +136,9 @@ for i in range(nw):
         else:
             Bc2[wi, wj] = 0
     SP[wk] = S[wk] - sum_Bc2[wk]
-print(np.min(SP))
+
+if np.min(SP)<0:
+    sys.exit('Simulation Failed: Check the form of the Bispectrum - Pure component is going less than zero')
 
 ########################################################################################################################
 # Simulation Part
