@@ -1,5 +1,7 @@
 from tools import *
 
+# Complete multipurpose code for the simulation of Multi-dimensional Multi-Variate stochastic random processes with
+# 2nd-order Spectral Representation Method
 
 class SRM:
     def __init__(self, n_sim, S, dw, nt, nw, case='uni'):

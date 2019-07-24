@@ -8,11 +8,14 @@ from BSRM import *
 
 plt.style.use('seaborn')
 
-# # Generate a series of theta
-nsamples = 20000
-
+########################################################################################################################
+# This idea has not been worked on in recent times. It is most likely abandoned as it does not promise anything better
+# than Spectral Representation
 ########################################################################################################################
 # Input parameters
+
+# # Generate a series of theta
+nsamples = 20000
 
 T = 100  # Time(1 / T = dw)
 nt = 256  # Num.of Discretized Time

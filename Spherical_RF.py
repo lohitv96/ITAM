@@ -4,6 +4,11 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 from scipy.special import sph_harm
 
+########################################################################################################################
+# Code for simulation of Gaussian Random Fields on a sphere from an angular power spectrum
+# A very promising venue to be able to extend the higher-order spectral representation methods we have developed.
+# Could possible help to expand them to simulating on manifolds.
+########################################################################################################################
 
 phi = np.linspace(0, np.pi, 100)
 theta = np.linspace(0, 2*np.pi, 100)
@@ -21,9 +26,8 @@ l_list = np.arange(l_end)
 c_l = np.exp(-l_list)
 
 for l in l_list:
-    for m in range(i):
-
-
+    for m in range(l):
+        print(l, m)
 
 # Calculate the spherical harmonic Y(l,m) and normalize to [0,1]
 fcolors = sph_harm(m, l, theta, phi).real
